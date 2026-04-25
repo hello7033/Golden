@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>泰國旅遊行程表</title>
+    <title>泰國旅遊行程表 - 究極金箔版</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -32,7 +32,6 @@
             color: #334155;
         }
 
-        /* 究極金箔飄落效果 */
         @keyframes fall {
             0% { transform: translateY(-10vh) translateX(0) rotateX(0deg) rotateY(0deg); opacity: 0; }
             15% { opacity: 1; }
@@ -50,7 +49,6 @@
             box-shadow: 0 0 12px rgba(251, 191, 36, 0.8), inset 0 0 5px rgba(255, 255, 255, 0.5);
         }
 
-        /* 玻璃擬態面板 */
         .glass-panel { 
             background: rgba(255, 255, 255, 0.75); 
             backdrop-filter: blur(20px); 
@@ -70,12 +68,6 @@
             border: 1px solid rgba(212, 175, 55, 0.12); 
             box-shadow: 0 8px 30px rgba(133, 77, 14, 0.04);
             transition: all 0.3s ease;
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.12);
-            border-color: rgba(251, 191, 36, 0.5);
         }
 
         .editable-input { background: transparent; border: none; outline: none; width: 100%; }
@@ -101,8 +93,6 @@
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; }
         .sync-dot.on { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
         
-        .day-btn-input { background: transparent; border: none; outline: none; width: 100%; text-align: center; font-weight: 800; cursor: pointer; }
-
         @keyframes shine {
             0% { background-position: -200% center; }
             100% { background-position: 200% center; }
@@ -114,6 +104,50 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        /* 天數按鈕優化 - 手機版寬度更緊湊 */
+        .day-btn {
+            min-width: 85px; /* 從 110px 縮小，讓版面顯示更多 */
+            height: 48px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            padding: 0 12px;
+        }
+
+        @media (min-width: 768px) {
+            .day-btn { min-width: 100px; height: 54px; }
+        }
+
+        .day-btn-active {
+            background: linear-gradient(135deg, #fbbf24 0%, #d4af37 100%);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            color: white;
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .day-btn-inactive {
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .day-edit-input {
+            background: transparent;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            text-align: center;
+            width: 60px;
+            outline: none;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -122,11 +156,11 @@
     <div id="app" v-cloak>
         <!-- 🔐 入口頁面 -->
         <div v-if="!roomJoined" class="min-h-screen flex items-center justify-center px-6 relative z-50">
-            <div class="glass-panel w-full max-w-sm rounded-[3rem] p-8 md:p-14 text-center space-y-10">
+            <div class="glass-panel w-full max-w-sm rounded-[3rem] p-8 text-center space-y-10">
                 <div class="relative">
-                    <div class="text-6xl md:text-8xl mb-6 filter drop-shadow-[0_8px_8px_rgba(212,175,55,0.3)]">🇹🇭</div>
-                    <p class="text-[10px] md:text-[12px] font-black gold-gradient-text uppercase tracking-[0.4em] mb-2">Royal Thai Trip</p>
-                    <h1 class="text-3xl md:text-4xl font-light text-slate-800">GOLDEN <span class="font-serif-thai italic text-yellow-600">LAND</span></h1>
+                    <div class="text-6xl mb-6 filter drop-shadow-[0_8px_8px_rgba(212,175,55,0.3)]">🇹🇭</div>
+                    <p class="text-[10px] font-black gold-gradient-text uppercase tracking-[0.4em] mb-2">Royal Thai Trip</p>
+                    <h1 class="text-3xl font-light text-slate-800">Elite <span class="font-serif-thai italic text-yellow-600">Access</span></h1>
                 </div>
                 <div class="space-y-3 text-left">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">行程代碼</label>
@@ -134,7 +168,7 @@
                         class="w-full bg-white/50 border-2 border-yellow-100 rounded-2xl py-4 px-6 text-xl focus:outline-none focus:border-yellow-400 text-center tracking-[0.5em] shadow-inner">
                 </div>
                 <button @click="joinRoom" :disabled="!roomInput"
-                    class="w-full py-5 bg-gradient-to-br from-yellow-600 via-yellow-500 to-amber-700 text-white rounded-2xl text-[12px] font-black uppercase tracking-widest disabled:opacity-30 hover:shadow-lg active:scale-95 transition-all">
+                    class="w-full py-5 bg-gradient-to-br from-yellow-600 via-yellow-500 to-amber-700 text-white rounded-2xl text-[12px] font-black uppercase tracking-widest disabled:opacity-30 active:scale-95 transition-all">
                     開啟旅程 <i class="fa-solid fa-crown ml-2"></i>
                 </button>
             </div>
@@ -151,12 +185,12 @@
                 </div>
             </transition>
 
-            <header class="glass-header p-6 md:p-12 rounded-b-[3rem] md:rounded-b-[5rem] sticky top-0 z-50">
+            <header class="glass-header p-6 md:p-12 rounded-b-[3rem] sticky top-0 z-50">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center max-w-5xl mx-auto gap-4">
-                    <div class="space-y-1 md:space-y-2 flex-1 w-full">
-                        <input v-model="config.title" @change="saveToCloud" class="editable-input text-[10px] md:text-[12px] tracking-[0.4em] font-black text-yellow-700 uppercase">
+                    <div class="space-y-1 flex-1 w-full">
+                        <input v-model="config.title" @change="saveToCloud" class="editable-input text-[10px] tracking-[0.4em] font-black text-yellow-700 uppercase">
                         <input v-model="config.subtitle" @change="saveToCloud" class="editable-input text-3xl md:text-5xl font-serif-thai text-slate-900 italic leading-tight">
-                        <div class="flex items-center gap-3 md:gap-5 text-[10px] md:text-[11px] text-slate-600 font-bold mt-3 md:mt-6 bg-white/40 w-fit px-4 md:px-6 py-2 rounded-full border border-yellow-100">
+                        <div class="flex items-center gap-3 text-[10px] text-slate-600 font-bold mt-3 bg-white/40 w-fit px-4 py-2 rounded-full border border-yellow-100">
                             <span class="flex items-center gap-1.5"><i class="fa-solid fa-cloud-sun text-yellow-500"></i> {{ weather.desc }}</span>
                             <span class="w-px h-3 bg-yellow-200"></span>
                             <span class="text-yellow-700">{{ weather.temp }}°C</span>
@@ -165,7 +199,7 @@
                         </div>
                     </div>
                     <div class="flex md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3">
-                        <button @click="toggleLang" class="text-[10px] font-black text-slate-700 bg-white border border-yellow-100 px-4 py-1.5 rounded-full hover:border-yellow-400 transition-all uppercase tracking-widest shadow-sm">
+                        <button @click="toggleLang" class="text-[10px] font-black text-slate-700 bg-white border border-yellow-100 px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
                             {{ lang === 'zh' ? 'English' : '繁體中文' }}
                         </button>
                         <div class="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-full border border-white/50">
@@ -176,82 +210,104 @@
                 </div>
             </header>
 
-            <main class="max-w-5xl mx-auto p-4 md:p-8 mt-6 md:mt-12 space-y-10 md:space-y-16">
+            <main class="max-w-5xl mx-auto p-4 md:p-8 mt-6 space-y-10">
                 <!-- 匯率工具 -->
-                <div class="glass-card p-6 md:p-10 rounded-[2.5rem] md:rounded-[4rem] border-t-[4px] md:border-t-[6px] border-t-yellow-400 relative overflow-hidden">
-                    <div class="absolute -right-6 -top-6 text-7xl text-yellow-500/5 rotate-12 pointer-events-none"><i class="fa-solid fa-coins"></i></div>
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 gap-2 relative z-10">
+                <div class="glass-card p-6 md:p-10 rounded-[2.5rem] border-t-[4px] border-t-yellow-400 relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-2">
                         <div>
                             <div class="text-yellow-700 font-black text-[10px] uppercase tracking-[0.2em] mb-1">{{ t('匯率試算') }}</div>
-                            <div class="text-2xl md:text-3xl font-serif-thai italic text-slate-800">Currency Insight</div>
+                            <div class="text-2xl font-serif-thai italic text-slate-800">Currency Insight</div>
                         </div>
-                        <div class="text-[10px] font-black text-yellow-700 bg-yellow-100/50 px-3 py-1 rounded-lg border border-yellow-200">
+                        <div class="text-[10px] font-black text-yellow-700 bg-yellow-100/50 px-3 py-1 rounded-lg">
                             1 THB ≈ {{ rates.thb_twd }} TWD
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-[9px] text-slate-400 uppercase font-black tracking-widest ml-1">{{ t('泰銖') }} (THB)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-black text-sm">฿</span>
-                                <input v-model.number="calc.thb" @input="convertCurrency('thb')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 focus:border-yellow-400 outline-none">
+                                <input v-model.number="calc.thb" @input="convertCurrency('thb')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 outline-none">
                             </div>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-[9px] text-slate-400 uppercase font-black tracking-widest ml-1">{{ t('台幣') }} (TWD)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-black text-sm">$</span>
-                                <input v-model.number="calc.twd" @input="convertCurrency('twd')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 focus:border-yellow-400 outline-none">
+                                <input v-model.number="calc.twd" @input="convertCurrency('twd')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 outline-none">
                             </div>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-[9px] text-slate-400 uppercase font-black tracking-widest ml-1">{{ t('澳幣') }} (AUD)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-black text-sm">A$</span>
-                                <input v-model.number="calc.aud" @input="convertCurrency('aud')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 focus:border-yellow-400 outline-none">
+                                <input v-model.number="calc.aud" @input="convertCurrency('aud')" type="number" class="w-full pl-10 pr-4 py-3 bg-white border border-yellow-50 rounded-2xl text-center font-black text-lg text-yellow-900 outline-none">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 天數導航 -->
-                <div class="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar">
-                    <div class="flex bg-white/40 backdrop-blur-xl rounded-full shadow-sm p-1.5 gap-2 shrink-0 border border-white">
+                <!-- 天數導航 (優化點擊邏輯 & 加入刪除功能) -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-6 no-scrollbar">
+                    <div class="flex bg-white/40 backdrop-blur-xl rounded-full shadow-sm p-1 gap-2 shrink-0 border border-white">
                         <template v-if="config.days && config.days.length">
-                            <div v-for="(day, index) in config.days" :key="day.id" class="flex items-center">
-                                <div @click="currentDayId = day.id"
-                                    :class="['px-6 md:px-10 h-12 md:h-16 rounded-full text-[10px] md:text-[12px] transition-all min-w-[100px] md:min-w-[140px] flex items-center justify-center cursor-pointer relative', 
-                                    currentDayId === day.id ? 'bg-gradient-to-br from-yellow-500 to-amber-600 text-white font-black shadow-md scale-105 z-10' : 'text-slate-400 hover:bg-yellow-100/30']">
-                                    <input v-model="day.label" @change="saveToCloud" @click.stop 
-                                        :class="['day-btn-input uppercase tracking-[0.2em]', currentDayId === day.id ? 'text-white' : 'text-slate-500']">
-                                </div>
+                            <div v-for="(day, index) in config.days" :key="day.id" 
+                                @click="currentDayId = day.id"
+                                :class="['day-btn', currentDayId === day.id ? 'day-btn-active' : 'day-btn-inactive']">
+                                
+                                <!-- 一般文字 -->
+                                <span v-if="editingDayId !== day.id" class="text-[10px] font-black tracking-[0.1em] uppercase">
+                                    {{ day.label }}
+                                </span>
+                                
+                                <!-- 編輯框 -->
+                                <input v-else 
+                                    v-model="day.label" 
+                                    @blur="editingDayId = null; saveToCloud();" 
+                                    @keyup.enter="editingDayId = null; saveToCloud();"
+                                    class="day-edit-input uppercase"
+                                    autofocus>
+
+                                <!-- 編輯按鈕 -->
+                                <button v-if="currentDayId === day.id && editingDayId !== day.id" 
+                                    @click.stop="editingDayId = day.id"
+                                    class="ml-1.5 text-[10px] opacity-70 hover:opacity-100">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                
+                                <!-- 刪除按鈕 (僅在編輯模式出現) -->
+                                <button v-if="editingDayId === day.id"
+                                    @mousedown.stop="removeDay(day.id)"
+                                    class="ml-1.5 text-[10px] text-red-200 hover:text-white">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </div>
                         </template>
                     </div>
-                    <div class="flex gap-2 shrink-0">
-                        <button @click="addDay" class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white text-yellow-600 flex items-center justify-center text-xl shadow-sm border border-yellow-100"><i class="fa-solid fa-plus"></i></button>
-                    </div>
+                    <button @click="addDay" class="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-white text-yellow-600 flex items-center justify-center text-lg shadow-sm border border-yellow-100"><i class="fa-solid fa-plus"></i></button>
                 </div>
 
                 <!-- 行程列表 -->
-                <div id="sortable-events" class="space-y-6 md:space-y-10">
+                <div id="sortable-events" class="space-y-6">
                     <div v-for="event in filteredEvents" :key="event.id" :data-id="event.id" class="flex flex-col md:flex-row gap-2 md:gap-8 group">
+                        <!-- 電腦版時間線 -->
                         <div class="w-20 hidden md:flex flex-col items-center shrink-0 pt-4">
                             <div class="text-[11px] font-black gold-gradient-text uppercase tracking-widest mb-4">{{ event.timeDisplay || 'Relax' }}</div>
                             <div class="w-[2px] flex-1 bg-gradient-to-b from-yellow-400 via-yellow-100 to-transparent rounded-full"></div>
                         </div>
 
-                        <div @click="openEdit(event)" class="flex-1 glass-panel p-5 md:p-10 rounded-[2rem] md:rounded-[4rem] relative cursor-pointer border-l-[6px] md:border-l-[8px] border-l-yellow-500">
+                        <!-- 行程卡片 -->
+                        <div @click="openEdit(event)" class="flex-1 glass-panel p-5 md:p-8 rounded-[2rem] relative cursor-pointer border-l-[6px] border-l-yellow-500">
                             <button @click.stop="removeEvent(event.id)" class="absolute top-5 right-6 text-slate-300 hover:text-red-500 transition-all md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button>
                             
-                            <div class="mb-2 md:mb-4 flex items-center gap-2">
+                            <div class="mb-2 flex items-center gap-2">
                                 <span v-if="event.timeDisplay" class="bg-yellow-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black uppercase md:hidden">{{ event.timeDisplay }}</span>
-                                <h3 class="text-lg md:text-2xl font-bold text-slate-800 tracking-tight">{{ event.location || '新增行程' }}</h3>
+                                <h3 class="text-lg font-bold text-slate-800 tracking-tight">{{ event.location || '新增行程' }}</h3>
                             </div>
                             
-                            <div class="text-[14px] md:text-[15px] text-slate-500 leading-relaxed mb-6 font-light whitespace-pre-line">{{ event.desc }}</div>
+                            <div class="text-[14px] text-slate-500 leading-relaxed mb-6 font-light whitespace-pre-line">{{ event.desc }}</div>
                             
-                            <div class="flex flex-wrap gap-2 md:gap-4">
+                            <div class="flex flex-wrap gap-2">
                                 <button v-if="event.mapUrl" @click.stop="openUrl(event.mapUrl)" class="action-btn flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black text-slate-600 shadow-sm">
                                     <i class="fa-solid fa-map-marked-alt text-yellow-500"></i> {{ t('地圖資訊') }}
                                 </button>
@@ -266,7 +322,7 @@
                     </div>
                     
                     <button @click="openAdd" 
-                        class="w-full py-6 md:py-10 border-2 border-dashed border-yellow-300/40 rounded-[2rem] md:rounded-[4rem] text-yellow-700/50 text-[12px] md:text-[14px] font-black uppercase tracking-[0.2em] hover:bg-yellow-50 transition-all flex items-center justify-center gap-3">
+                        class="w-full py-6 border-2 border-dashed border-yellow-300/40 rounded-[2rem] text-yellow-700/50 text-[12px] font-black uppercase tracking-[0.2em] hover:bg-yellow-50 flex items-center justify-center gap-3">
                         <i class="fa-solid fa-plus-circle text-xl"></i> {{ t('Add Destination') }}
                     </button>
                 </div>
@@ -275,7 +331,7 @@
             <!-- 編輯彈窗 -->
             <div v-if="showModal" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md" @click="showModal = false"></div>
-                <div class="relative bg-white w-full max-w-xl rounded-t-[2.5rem] md:rounded-[4rem] p-6 md:p-10 shadow-2xl space-y-6 overflow-hidden flex flex-col max-h-[90vh] border-t-2 md:border-2 border-yellow-100">
+                <div class="relative bg-white w-full max-w-xl rounded-t-[2.5rem] md:rounded-[3rem] p-6 md:p-10 shadow-2xl space-y-6 overflow-hidden flex flex-col max-h-[90vh] border-t-2 border-yellow-100">
                     <div class="text-center shrink-0">
                         <div class="w-12 h-1 bg-slate-200 mx-auto rounded-full mb-4 md:hidden"></div>
                         <h2 class="text-[10px] font-black gold-gradient-text uppercase tracking-widest">{{ editingId ? t('編輯行程') : t('Add Destination') }}</h2>
@@ -345,6 +401,7 @@
                 const roomKey = ref('');
                 const saving = ref(false);
                 const currentDayId = ref('d1');
+                const editingDayId = ref(null);
                 const lang = ref('zh');
                 const weather = ref({ temp: '--', desc: 'Bangkok', rainChance: '--' });
                 const showModal = ref(false);
@@ -353,7 +410,7 @@
                 let dbRef = null;
 
                 const config = ref({ 
-                    title: 'Thailand adventure', 
+                    title: '泰國豪華深度遊', 
                     subtitle: 'Golden Memories',
                     days: [{ id: 'd1', label: 'DAY 1' }]
                 });
@@ -380,8 +437,9 @@
                             events.value = data.events ? Object.values(data.events) : [];
                             if (data.config) {
                                 config.value = data.config;
+                                // 檢查當前天數是否還存在，不存在則跳到第一天
                                 if (config.value.days && !config.value.days.find(d => d.id === currentDayId.value)) {
-                                    currentDayId.value = config.value.days[0].id;
+                                    currentDayId.value = config.value.days.length ? config.value.days[0].id : '';
                                 }
                             }
                         }
@@ -476,13 +534,23 @@
                     saveToCloud(); 
                 };
 
-                const removeLastDay = () => { 
-                    if(config.value.days.length > 1) { 
-                        const removed = config.value.days.pop();
-                        events.value = events.value.filter(e => e.dayId !== removed.id);
-                        if (currentDayId.value === removed.id) currentDayId.value = config.value.days[0].id;
-                        saveToCloud(); 
-                    } 
+                // 刪除天數功能
+                const removeDay = (dayId) => {
+                    if (config.value.days.length <= 1) return; // 至少留一天
+                    
+                    // 1. 從天數列表移除
+                    config.value.days = config.value.days.filter(d => d.id !== dayId);
+                    
+                    // 2. 清理歸屬於該天數的所有行程
+                    events.value = events.value.filter(e => e.dayId !== dayId);
+                    
+                    // 3. 切換當前天數
+                    if (currentDayId.value === dayId) {
+                        currentDayId.value = config.value.days[0].id;
+                    }
+                    
+                    editingDayId.value = null;
+                    saveToCloud();
                 };
 
                 const convertCurrency = (base) => {
@@ -497,13 +565,13 @@
                 const createLeaves = () => {
                     const container = document.getElementById('petal-container');
                     if (!container) return;
-                    for (let i = 0; i < 25; i++) {
+                    for (let i = 0; i < 20; i++) {
                         const p = document.createElement('div');
                         p.className = 'golden-leaf';
                         p.style.left = Math.random() * 100 + 'vw';
                         p.style.animationDuration = (Math.random() * 8 + 7) + 's';
                         p.style.animationDelay = (Math.random() * 10) + 's';
-                        const size = Math.random() * 10 + 6;
+                        const size = Math.random() * 8 + 6;
                         p.style.width = size + 'px';
                         p.style.height = (size * 1.5) + 'px';
                         container.appendChild(p);
@@ -513,8 +581,8 @@
                 onMounted(() => { createLeaves(); });
 
                 return { 
-                    roomJoined, roomInput, saving, config, events, filteredEvents, currentDayId, showModal, editingId, lang, weather, calc, rates, form, 
-                    joinRoom, toggleLang, t, saveToCloud, addDay, removeLastDay,
+                    roomJoined, roomInput, saving, config, events, filteredEvents, currentDayId, editingDayId, showModal, editingId, lang, weather, calc, rates, form, 
+                    joinRoom, toggleLang, t, saveToCloud, addDay, removeDay,
                     openUrl: (url) => { if (url) window.open(url.startsWith('http') ? url : 'https://' + url, '_blank'); },
                     openRoute: (a, b) => { window.open(`https://www.google.com/maps/dir/${encodeURIComponent(a)}/${encodeURIComponent(b)}`, '_blank'); },
                     openAdd: () => { editingId.value = null; form.value = { time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' }; showModal.value = true; },
