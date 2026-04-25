@@ -1,433 +1,571 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>泰國旅遊行程表 - 泰式插圖版</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
-        
-        [v-cloak] { display: none !important; }
-        
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background: #fffcf0;
-            background-image: radial-gradient(circle at 50% 50%, #ffffff 0%, #fff9e6 100%);
-            min-height: 100vh;
-            color: #334155;
-            margin: 0;
-            overflow-x: hidden;
-            position: relative;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰國旅遊行程表 - 奢華金版</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+        
+        [v-cloak] { display: none !important; }
+        
+        :root {
+            --thai-gold: #d4af37;
+            --thai-gold-light: #f3e5ab;
+            --thai-gold-dark: #b8860b;
+            --thai-accent: #eab308;
+        }
 
-        /* 泰式大象背景插圖 (SVG 水印) */
-        .thai-elephant-bg {
-            position: fixed;
-            bottom: -50px;
-            right: -80px;
-            width: 400px;
-            height: 400px;
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 0;
-            transform: rotate(-15deg);
-        }
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background: linear-gradient(135deg, #fffdf5 0%, #fef9c3 50%, #fffbeb 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            color: #444;
+        }
 
-        .thai-leaf-bg {
-            position: fixed;
-            top: -20px;
-            left: -50px;
-            width: 300px;
-            height: 300px;
-            opacity: 0.03;
-            pointer-events: none;
-            z-index: 0;
-        }
+        /* 奢華金瓣飄落效果 */
+        @keyframes fall {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(100vh) translateX(150px) rotate(720deg); opacity: 0; }
+        }
+        .golden-petal { 
+            position: fixed; 
+            pointer-events: none; 
+            z-index: 1; 
+            animation: fall linear infinite;
+            background: linear-gradient(135deg, var(--thai-gold), var(--thai-accent));
+            border-radius: 80% 0% 55% 45% / 55% 0% 80% 45%;
+            box-shadow: 0 4px 10px rgba(184, 134, 11, 0.15);
+            filter: blur(0.5px);
+        }
 
-        /* 飄落的金箔動畫 */
-        @keyframes fall {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-        }
-        
-        .golden-leaf { 
-            position: fixed; pointer-events: none; z-index: 1; animation: fall linear infinite;
-            background: linear-gradient(135deg, #fde047 0%, #d97706 100%);
-            border-radius: 2px 8px;
-            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
-        }
+        /* 玻璃擬態面板 */
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(212, 175, 55, 0.25); 
+            box-shadow: 0 15px 35px rgba(133, 77, 14, 0.08);
+        }
+        
+        .glass-header { 
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(25px); 
+            border-bottom: 1.5px solid rgba(212, 175, 55, 0.2); 
+        }
 
-        .glass-panel-login { 
-            background: rgba(255, 255, 255, 0.9); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(212, 175, 55, 0.15); 
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
-            position: relative;
-            z-index: 10;
-        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(212, 175, 55, 0.15); 
+            box-shadow: 0 10px 40px rgba(133, 77, 14, 0.04);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(133, 77, 14, 0.08);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
 
-        .gold-gradient-text {
-            background: linear-gradient(135deg, #92400e 0%, #f59e0b 50%, #b45309 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .editable-input { background: transparent; border: none; outline: none; width: 100%; }
+        .font-serif-thai { font-family: 'Playfair Display', serif; }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        .day-input {
-            background: transparent; border: none; outline: none; text-align: center;
-            width: 100%; font-weight: bold; padding: 4px;
-        }
-    </style>
+        /* 卷軸美化 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 金色漸層文字 */
+        .gold-gradient-text {
+            background: linear-gradient(to right, var(--thai-gold-dark), var(--thai-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 按鈕美化 */
+        .action-btn { 
+            background: rgba(255,255,255,0.9); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            transition: all 0.3s; 
+            box-shadow: 0 2px 6px rgba(133, 77, 14, 0.05);
+        }
+        .action-btn:hover { 
+            background: white; 
+            transform: translateY(-2px); 
+            border-color: var(--thai-gold);
+            box-shadow: 0 4px 12px rgba(133, 77, 14, 0.1);
+        }
+
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .sync-dot.on { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+        .sync-dot.off { background: #ef4444; }
+
+        .day-btn-input { background: transparent; border: none; outline: none; width: 100%; text-align: center; font-weight: 800; cursor: pointer; }
+        
+        .sortable-ghost { opacity: 0.3; background: #fde68a !important; transform: scale(0.95); }
+    </style>
 </head>
 <body>
-    <!-- 背景插圖組 -->
-    <div class="thai-elephant-bg">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#D97706" d="M160,110 c0,0,10,-10,10,-30 c0,-20,-20,-40,-50,-40 c-30,0,-60,20,-70,50 c-5,15,-5,30,5,45 c5,10,20,20,30,20 c5,0,10,-5,10,-10 c0,-5,-5,-10,-10,-10 c-5,0,-15,-5,-15,-15 c0,-10,15,-25,40,-25 c20,0,30,10,30,25 c0,15,-10,20,-10,30 c0,10,5,15,10,15 S160,120,160,110 z M110,65 c5,0,10,5,10,10 s-5,10,-10,10 s-10,-5,-10,-10 S105,65,110,65 z" />
-            <path fill="#D97706" d="M40,110 c0,0,-10,10,-15,30 c-5,20,5,40,20,50 c15,10,40,5,55,-10 c5,-5,5,-15,0,-20 s-15,-5,-20,0 c-10,10,-20,10,-25,5 c-5,-5,-5,-15,0,-25 c5,-10,15,-20,25,-25 c10,-5,15,-15,10,-20 S75,90,70,95 C60,100,40,110,40,110 z" />
-        </svg>
-    </div>
-    <div class="thai-leaf-bg">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#15803D" d="M100,20 C100,20 40,60 40,110 C40,160 100,180 100,180 C100,180 160,160 160,110 C160,60 100,20 100,20 z M100,160 C80,140 60,110 60,90 C60,75 75,60 90,60 L100,80 L110,60 C125,60 140,75 140,90 C140,110 120,140 100,160 z" />
-        </svg>
-    </div>
+    <div id="petal-container"></div>
 
-    <div id="petal-container"></div>
+    <div id="app" v-cloak>
+        <!-- 🔐 入口頁面 - 升級奢華感 -->
+        <div v-if="!roomJoined" class="min-h-screen flex items-center justify-center px-6 relative z-50">
+            <div class="glass-panel w-full max-w-sm rounded-[3.5rem] p-12 text-center space-y-10">
+                <div class="relative">
+                    <div class="text-7xl mb-8 filter drop-shadow-lg">🐘</div>
+                    <p class="text-[11px] font-black gold-gradient-text uppercase tracking-[0.5em] mb-2">Luxury Getaway</p>
+                    <h1 class="text-4xl font-light text-slate-800">Thailand <span class="font-serif-thai italic text-yellow-600">2026</span></h1>
+                </div>
+                <div class="space-y-4 text-left">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Private Access Key</label>
+                    <input v-model="roomInput" @keyup.enter="joinRoom" type="password" placeholder="••••••••"
+                        class="w-full bg-white/50 border border-yellow-100 rounded-2xl py-4 px-5 text-xl focus:outline-none focus:border-yellow-400 text-center tracking-[0.3em] shadow-inner">
+                </div>
+                <button @click="joinRoom" :disabled="!roomInput"
+                    class="w-full py-5 bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-2xl text-[12px] font-black uppercase tracking-widest disabled:opacity-30 hover:shadow-2xl hover:scale-[1.02] transition-all">
+                    Explore Itinerary <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
 
-    <div id="app" v-cloak>
-        <!-- 🔐 登入頁 -->
-        <div v-if="!roomJoined" class="min-h-screen flex flex-col items-center justify-center px-4 relative z-50">
-            <div class="glass-panel-login rounded-[3.5rem] p-8 md:p-12 text-center">
-                <div class="mb-10">
-                    <div class="text-5xl mb-6">🐘</div>
-                    <div class="inline-block border-y border-yellow-200 py-1 mb-2">
-                        <p class="text-[10px] font-black text-yellow-600 uppercase tracking-[0.4em] px-4">Thailand Trip</p>
-                    </div>
-                    <h1 class="text-4xl font-serif italic text-slate-800 mt-2">Spring <span class="font-bold text-yellow-600">2026</span></h1>
-                </div>
-                
-                <div class="space-y-8">
-                    <div class="relative">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Room Access Code</p>
-                        <input v-model="roomInput" @keyup.enter="joinRoom" type="password" placeholder="ENTER KEY"
-                            class="w-full bg-slate-50/80 border border-slate-100 rounded-2xl py-4 px-6 text-xl focus:outline-none focus:ring-2 focus:ring-yellow-200 text-center tracking-widest placeholder:text-slate-200 shadow-inner">
-                    </div>
-                    
-                    <button @click="joinRoom" :disabled="!roomInput"
-                        class="w-full py-4 bg-slate-900 text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] disabled:opacity-20 hover:bg-slate-800 transition-all transform active:scale-95 shadow-lg">
-                        Begin Journey
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- 主內容頁面 -->
+        <div v-if="roomJoined" class="min-h-screen pb-24 relative z-10">
+            <transition>
+                <div v-if="saving" class="fixed top-8 left-1/2 -translate-x-1/2 z-[110]">
+                    <div class="bg-white/95 px-8 py-3 rounded-full shadow-2xl text-[10px] text-yellow-700 font-black tracking-[0.2em] border border-yellow-200 flex items-center gap-3">
+                        <i class="fa-solid fa-crown animate-pulse text-yellow-500"></i> PRESERVING MEMORIES...
+                    </div>
+                </div>
+            </transition>
 
-        <!-- 🗺️ 主行程頁 -->
-        <div v-else class="min-h-screen pb-20 relative z-10">
-            <header class="bg-white/80 backdrop-blur-md p-6 sticky top-0 z-50 rounded-b-[2.5rem] border-b border-yellow-100 shadow-sm">
-                <div class="max-w-3xl mx-auto flex justify-between items-center">
-                    <div>
-                        <div class="gold-gradient-text font-black tracking-widest text-[10px] uppercase">
-                            {{ config.title || 'THAI GRAND VOYAGE' }}
-                        </div>
-                        <div class="text-2xl font-serif italic text-slate-800">
-                            {{ config.subtitle || 'Spring 2026' }}
-                        </div>
-                    </div>
+            <header class="glass-header p-10 rounded-b-[4rem] sticky top-0 z-50">
+                <div class="flex justify-between items-center max-w-4xl mx-auto">
+                    <div class="space-y-1 flex-1 mr-6">
+                        <input v-model="config.title" @change="saveToCloud" class="editable-input text-[11px] tracking-[0.5em] font-black text-yellow-600 uppercase">
+                        <input v-model="config.subtitle" @change="saveToCloud" class="editable-input text-4xl font-serif-thai text-slate-800 italic">
+                        <div class="flex items-center gap-4 text-[11px] text-slate-500 font-bold mt-4 bg-white/30 w-fit px-4 py-1.5 rounded-full border border-white/50">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-sun text-yellow-500"></i> {{ weather.desc }}</span>
+                            <span class="w-px h-3 bg-slate-200"></span>
+                            <span>{{ weather.temp }}°C</span>
+                            <span class="w-px h-3 bg-slate-200"></span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-cloud-rain text-blue-300"></i> {{ weather.rainChance }}%</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-4">
+                        <button @click="toggleLang" class="text-[10px] font-black text-slate-500 bg-white/80 border border-yellow-100 px-4 py-1.5 rounded-full hover:border-yellow-400 transition-all uppercase tracking-tighter shadow-sm">
+                            {{ lang === 'zh' ? 'EN' : '中文' }}
+                        </button>
+                        <div class="flex items-center gap-2.5 bg-slate-800/5 px-3 py-1 rounded-full">
+                            <span class="sync-dot" :class="saving ? 'off' : 'on'"></span>
+                            <span class="text-[9px] font-black text-slate-500 tracking-widest uppercase">{{ saving ? 'Syncing' : 'Connected' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-                    <div class="flex flex-col items-end">
-                        <button @click="toggleLang" class="text-[9px] font-black text-slate-400 border border-slate-200 rounded-full px-3 py-1 uppercase hover:bg-slate-50 transition-colors">
-                            {{ lang === 'zh' ? 'EN' : '繁中' }}
-                        </button>
-                        <div v-if="weather" class="mt-2 flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                            <span><i class="fa-solid fa-sun text-yellow-400 mr-1"></i>{{ weather.temp }}°C</span>
-                            <span><i class="fa-solid fa-droplet text-blue-300 mr-1"></i>{{ weather.rainChance }}%</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <main class="max-w-4xl mx-auto p-6 mt-10 space-y-12">
+                <!-- 匯率工具 - 質感強化 -->
+                <div class="glass-card p-8 rounded-[3rem] border-t-4 border-t-yellow-400">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <div class="text-yellow-700 font-black text-[11px] uppercase tracking-[0.2em] mb-1">{{ t('匯率試算') }}</div>
+                            <div class="text-2xl font-serif-thai italic text-slate-700">Currency <span class="text-yellow-600">Converter</span></div>
+                        </div>
+                        <div class="text-[11px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-lg">1 THB = {{ rates.thb_twd }} TWD</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-6 text-center">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] text-slate-400 uppercase font-black tracking-widest">{{ t('泰銖') }}</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-bold text-xs">฿</span>
+                                <input v-model.number="calc.thb" @input="convertCurrency('thb')" type="number" class="w-full pl-8 pr-4 py-4 bg-yellow-50/50 rounded-2xl border-none text-center font-black text-yellow-900 outline-none focus:ring-2 ring-yellow-200 transition-all">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] text-slate-400 uppercase font-black tracking-widest">{{ t('台幣') }}</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-bold text-xs">$</span>
+                                <input v-model.number="calc.twd" @input="convertCurrency('twd')" type="number" class="w-full pl-8 pr-4 py-4 bg-yellow-50/50 rounded-2xl border-none text-center font-black text-yellow-900 outline-none focus:ring-2 ring-yellow-200 transition-all">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] text-slate-400 uppercase font-black tracking-widest">{{ t('澳幣') }}</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-600 font-bold text-xs">A$</span>
+                                <input v-model.number="calc.aud" @input="convertCurrency('aud')" type="number" class="w-full pl-8 pr-4 py-4 bg-yellow-50/50 rounded-2xl border-none text-center font-black text-yellow-900 outline-none focus:ring-2 ring-yellow-200 transition-all">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <main class="max-w-3xl mx-auto p-5 mt-4 space-y-6">
-                <!-- 匯率轉換 -->
-                <div class="bg-white/50 border border-yellow-50 rounded-[2rem] p-6 grid grid-cols-3 gap-4 shadow-sm relative z-10">
-                    <div v-for="curr in ['thb', 'twd', 'aud']" :key="curr">
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-center mb-1">{{ curr }}</label>
-                        <input v-model.number="calc[curr]" @input="convertCurrency(curr)" type="number" 
-                            class="w-full bg-transparent border-b border-yellow-100 text-center text-lg font-bold py-1 focus:border-yellow-400 outline-none">
-                    </div>
-                </div>
+                <!-- 天數切換器 - 更流暢的視覺 -->
+                <div class="flex items-center gap-4 overflow-x-auto pb-4 no-scrollbar">
+                    <div class="flex bg-white/50 backdrop-blur-md rounded-3xl shadow-sm p-2.5 gap-2 shrink-0 border border-white">
+                        <template v-if="config.days && config.days.length">
+                            <div v-for="(day, index) in config.days" :key="day.id" class="flex items-center">
+                                <div @click="currentDayId = day.id"
+                                    :class="['px-8 h-14 rounded-2xl text-[11px] transition-all min-w-[120px] flex items-center justify-center cursor-pointer relative overflow-hidden group', 
+                                    currentDayId === day.id ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-white font-black shadow-lg scale-105 z-10' : 'text-slate-400 hover:bg-yellow-50']">
+                                    <input v-model="day.label" @change="saveToCloud" @click.stop 
+                                        :class="['day-btn-input uppercase tracking-[0.2em]', currentDayId === day.id ? 'text-white' : 'text-slate-400']">
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="flex gap-2.5 shrink-0">
+                        <button @click="addDay" class="w-14 h-14 rounded-2xl bg-white/80 text-yellow-600 flex items-center justify-center text-xl shadow-sm hover:bg-yellow-50 hover:scale-110 transition-all border border-yellow-100">+</button>
+                        <button @click="removeLastDay" v-if="config.days && config.days.length > 1" class="w-14 h-14 rounded-2xl bg-white/80 text-slate-300 flex items-center justify-center text-xl shadow-sm hover:text-red-400 hover:bg-red-50 transition-all border border-slate-100">-</button>
+                    </div>
+                </div>
 
-                <!-- 天數導覽 -->
-                <div class="flex gap-2 overflow-x-auto no-scrollbar py-2 items-center relative z-10">
-                    <div v-for="day in config.days" :key="day.id" 
-                        @click="currentDayId = day.id"
-                        :class="['px-4 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all border flex items-center min-w-[100px]', currentDayId === day.id ? 'bg-yellow-600 border-yellow-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-400 hover:border-yellow-200']">
-                        <input v-model="day.label" @change="saveToCloud" @click.stop class="day-input" :class="currentDayId === day.id ? 'text-white' : 'text-slate-500'">
-                    </div>
-                    <button @click="addDay" class="w-8 h-8 shrink-0 bg-white border border-slate-100 text-slate-300 rounded-full hover:text-yellow-600 flex items-center justify-center">+</button>
-                </div>
+                <!-- 行程卡片清單 -->
+                <div id="sortable-events" class="space-y-8">
+                    <div v-for="event in filteredEvents" :key="event.id" :data-id="event.id" class="flex gap-6 group">
+                        <!-- 時間軸指示 -->
+                        <div class="w-16 flex flex-col items-center shrink-0 pt-2">
+                            <div class="text-[11px] font-black text-yellow-600/60 uppercase tracking-tighter mb-2">
+                                {{ event.timeDisplay || 'Anytime' }}
+                            </div>
+                            <div class="w-px flex-1 bg-gradient-to-b from-yellow-300/50 to-transparent"></div>
+                        </div>
 
-                <!-- 行程清單 -->
-                <div id="sortable-events" class="space-y-4 relative z-10">
-                    <div v-for="event in filteredEvents" :key="event.id" :data-id="event.id" class="flex gap-4">
-                        <div class="w-12 shrink-0 text-center pt-4">
-                            <div class="text-[10px] font-black text-yellow-600 leading-none">{{ event.time || '--' }}</div>
-                            <div class="w-px h-full bg-yellow-50 mx-auto mt-2"></div>
-                        </div>
-                        <div @click="openEdit(event)" class="flex-1 bg-white p-5 rounded-[1.8rem] border border-slate-50 shadow-sm relative cursor-pointer hover:shadow-md transition-all group">
-                            <div class="flex justify-between">
-                                <h3 class="text-lg font-bold text-slate-800">{{ event.location || 'New Spot' }}</h3>
-                                <i @click.stop="removeEvent(event.id)" class="fas fa-times text-slate-100 group-hover:text-red-200 text-xs mt-1 transition-colors"></i>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">{{ event.desc }}</p>
-                            
-                            <div class="flex flex-wrap gap-2 mt-4">
-                                <button v-if="event.mapUrl" @click.stop="openUrl(event.mapUrl)" class="bg-slate-50 px-3 py-1.5 rounded-full text-[9px] font-bold text-slate-500 border border-slate-100 uppercase flex items-center gap-1">
-                                    <i class="fa-solid fa-map-pin text-red-400"></i> Map
-                                </button>
-                                <button v-if="event.routeA && event.routeB" @click.stop="openRoute(event.routeA, event.routeB)" class="bg-slate-50 px-3 py-1.5 rounded-full text-[9px] font-bold text-slate-500 border border-slate-100 uppercase flex items-center gap-1">
-                                    <i class="fa-solid fa-car text-blue-400"></i> {{ event.routeName || 'Route' }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button @click="openAdd" class="w-full py-8 border-2 border-dashed border-slate-100 rounded-[2rem] text-slate-300 font-bold hover:bg-slate-50/50 transition-all text-[10px] tracking-widest">
-                        + ADD NEW ENTRY
-                    </button>
-                </div>
-            </main>
-        </div>
+                        <!-- 內容卡片 -->
+                        <div @click="openEdit(event)" class="flex-1 glass-panel p-8 rounded-[3rem] relative cursor-pointer active:scale-[0.99] transition-all hover:shadow-2xl border-l-[6px] border-l-yellow-500">
+                            <button @click.stop="removeEvent(event.id)" class="absolute top-6 right-8 text-slate-200 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"><i class="fa-solid fa-circle-xmark text-lg"></i></button>
+                            
+                            <div class="mb-2 flex items-center gap-2">
+                                <span v-if="event.timeDisplay" class="bg-yellow-100 text-yellow-700 text-[9px] px-2 py-0.5 rounded-full font-black uppercase">{{ event.timeDisplay }}</span>
+                                <h3 class="text-xl font-bold text-slate-800">{{ event.location || 'Untitled Plan' }}</h3>
+                            </div>
+                            
+                            <div class="desc-text text-[14px] text-slate-500 leading-relaxed mb-6 font-light">{{ event.desc }}</div>
+                            
+                            <div class="flex flex-wrap gap-3">
+                                <button v-if="event.mapUrl" @click.stop="openUrl(event.mapUrl)" class="action-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black text-slate-600">
+                                    <i class="fa-solid fa-location-dot text-yellow-500"></i> {{ t('地圖資訊') }}
+                                </button>
+                                <button v-if="event.routeA && event.routeB" @click.stop="openRoute(event.routeA, event.routeB)" class="action-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black text-slate-600">
+                                    <i class="fa-solid fa-compass text-blue-500"></i> {{ event.routeName || (event.routeA + ' ➔ ' + event.routeB) }}
+                                </button>
+                                <button v-if="event.videoUrl" @click.stop="openUrl(event.videoUrl)" class="action-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] font-black text-slate-600">
+                                    <i class="fa-solid fa-hashtag text-orange-500"></i> {{ event.videoName || t('查看參考') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button @click="openAdd" 
+                        class="w-full ml-20 py-8 border-2 border-dashed border-yellow-300/50 rounded-[3rem] text-yellow-700/30 text-[13px] font-black uppercase tracking-[0.3em] hover:bg-yellow-100/30 hover:border-yellow-400 transition-all flex items-center justify-center gap-3" style="width: calc(100% - 80px)">
+                        <i class="fa-solid fa-plus-circle text-lg"></i> {{ t('New Entry') }}
+                    </button>
+                </div>
+            </main>
 
-        <!-- 編輯彈窗 -->
-        <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
-            <div class="relative bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl space-y-6 overflow-y-auto max-h-[85vh] no-scrollbar">
-                <h2 class="text-lg font-bold text-center text-slate-800 uppercase tracking-widest">{{ editingId ? 'Edit Event' : 'New Event' }}</h2>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-1">TIME</label>
-                            <input v-model="form.time" placeholder="09:00" class="w-full bg-slate-50 rounded-xl py-3 px-4 text-sm outline-none">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-1">LOCATION</label>
-                            <input v-model="form.location" placeholder="Where to?" class="w-full bg-slate-50 rounded-xl py-3 px-4 text-sm outline-none">
-                        </div>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[9px] font-bold text-slate-400 ml-1">NOTES</label>
-                        <textarea v-model="form.desc" placeholder="Details..." class="w-full bg-slate-50 rounded-xl py-3 px-4 text-sm outline-none h-24 resize-none"></textarea>
-                    </div>
-                </div>
-                <button @click="saveEvent" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all uppercase text-[11px] tracking-widest shadow-lg">
-                    Confirm Changes
-                </button>
-            </div>
-        </div>
-    </div>
+            <!-- 編輯彈窗 - 更精緻的排版 -->
+            <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md" @click="showModal = false"></div>
+                <div class="relative bg-white w-full max-w-lg rounded-[4rem] p-10 shadow-2xl space-y-6 overflow-hidden flex flex-col max-h-[92vh] border border-yellow-100">
+                    <div class="text-center shrink-0 mb-2">
+                        <div class="w-12 h-1 bg-yellow-200 mx-auto rounded-full mb-4"></div>
+                        <p class="text-[11px] font-black text-yellow-600 uppercase tracking-[0.4em]">{{ editingId ? t('編輯行程') : t('New Entry') }}</p>
+                    </div>
+                    
+                    <div class="space-y-6 overflow-y-auto pr-3 no-scrollbar flex-1 pb-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{{ t('時間') }}</label>
+                                <input v-model="form.time" placeholder="e.g. 09:30" class="w-full border-b-2 border-slate-100 py-3 text-sm focus:outline-none focus:border-yellow-500 transition-all font-bold">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{{ t('標題') }}</label>
+                                <input v-model="form.location" placeholder="Where to go?" class="w-full border-b-2 border-slate-100 py-3 text-sm focus:outline-none focus:border-yellow-500 transition-all font-bold">
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50/70 p-6 rounded-[2.5rem] space-y-4 border border-yellow-100">
+                            <label class="text-[10px] font-black text-yellow-700 uppercase tracking-widest flex items-center gap-2">
+                                <i class="fa-solid fa-map-location"></i> Route Planning
+                            </label>
+                            <div class="flex items-center gap-3">
+                                <input v-model="form.routeA" placeholder="From" class="flex-1 bg-white border border-yellow-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-yellow-400 shadow-sm">
+                                <i class="fa-solid fa-arrow-right text-yellow-300"></i>
+                                <input v-model="form.routeB" placeholder="To" class="flex-1 bg-white border border-yellow-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-yellow-400 shadow-sm">
+                            </div>
+                            <input v-model="form.routeName" placeholder="Button Label (e.g. MRT 20 min)" class="w-full bg-white border border-yellow-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-yellow-400 shadow-sm font-medium italic text-slate-500">
+                        </div>
 
-    <script>
-        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+                        <div class="space-y-4 bg-slate-50/80 p-6 rounded-[2.5rem] border border-slate-100">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <i class="fa-solid fa-link"></i> Social & Media
+                            </label>
+                            <div class="space-y-3">
+                                <input v-model="form.videoUrl" placeholder="URL (Instagram / TikTok / Blog)" class="w-full bg-white border border-slate-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-yellow-400 shadow-sm">
+                                <input v-model="form.videoName" placeholder="Display Text (e.g. Watch Reel)" class="w-full bg-white border border-slate-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-yellow-400 shadow-sm font-medium italic text-slate-500">
+                            </div>
+                        </div>
 
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "",
-            authDomain: "sakura-db2eb.firebaseapp.com",
-            databaseURL: "https://sakura-db2eb-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sakura-db2eb",
-            appId: "1:1018635903034:web:b9cff8697598f66be55503"
-        };
+                        <div class="space-y-1 px-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ t('地圖資訊') }}</label>
+                            <input v-model="form.mapUrl" placeholder="Google Maps URL" class="w-full border-b-2 border-slate-100 py-3 text-sm focus:outline-none focus:border-yellow-500 transition-all">
+                        </div>
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+                        <div class="space-y-1 px-1">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ t('內容') }}</label>
+                            <textarea v-model="form.desc" placeholder="Details, must-eat, or reminders..." class="w-full border-b-2 border-slate-100 py-3 text-sm focus:outline-none resize-none h-40 focus:border-yellow-500 transition-all font-light"></textarea>
+                        </div>
+                    </div>
 
-        createApp({
-            setup() {
-                const roomJoined = ref(false);
-                const roomInput = ref('');
-                const roomKey = ref('');
-                const lang = ref('zh');
-                const currentDayId = ref('d1');
-                const showModal = ref(false);
-                const editingId = ref(null);
-                const saving = ref(false);
-                const weather = ref(null);
-                let sortableInstance = null;
+                    <button @click="saveEvent" :disabled="!form.location"
+                        class="w-full py-5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-[2rem] text-[12px] font-black uppercase tracking-[0.3em] disabled:opacity-30 shadow-xl hover:shadow-yellow-200/50 active:scale-95 transition-all">
+                        Save Destination
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                const config = ref({ 
-                    title: 'THAI GRAND VOYAGE', 
-                    subtitle: 'Spring 2026',
-                    days: [{ id: 'd1', label: 'DAY 1' }]
-                });
+    <script>
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
-                const events = ref([]);
-                const form = ref({ time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' });
-                const calc = ref({ thb: 0, twd: 0, aud: 0 });
-                const rates = ref({ thb_twd: 0.92, thb_aud: 0.046 });
+        const firebaseConfig = {
+            apiKey: "", 
+            authDomain: "sakura-db2eb.firebaseapp.com",
+            databaseURL: "https://sakura-db2eb-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sakura-db2eb",
+            appId: "1:1018635903034:web:b9cff8697598f66be55503"
+        };
 
-                const joinRoom = () => {
-                    const cleanRoom = roomInput.value.trim();
-                    if (!cleanRoom) return;
-                    roomKey.value = `room_${cleanRoom}`;
-                    roomJoined.value = true;
-                    
-                    const dbRef = db.ref(`rooms/${roomKey.value}`);
-                    dbRef.on('value', (snapshot) => {
-                        const data = snapshot.val();
-                        if (data) {
-                            if (data.events) events.value = Object.values(data.events);
-                            if (data.config) config.value = data.config;
-                        }
-                        nextTick(() => initSortable());
-                    });
-                    fetchRates();
-                    fetchWeather();
-                };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-                const saveToCloud = async () => {
-                    if (!roomKey.value) return;
-                    saving.value = true;
-                    const eventsObj = {};
-                    events.value.forEach(e => { eventsObj[e.id] = e; });
-                    try {
-                        await db.ref(`rooms/${roomKey.value}`).update({
-                            events: eventsObj,
-                            config: config.value
-                        });
-                        setTimeout(() => saving.value = false, 800);
-                    } catch (e) { saving.value = false; }
-                };
+        createApp({
+            setup() {
+                const roomJoined = ref(false);
+                const roomInput = ref('');
+                const roomKey = ref('');
+                const saving = ref(false);
+                const currentDayId = ref('d1');
+                const lang = ref('zh');
+                const weather = ref({ temp: '--', desc: 'Bangkok', rainChance: '--' });
+                const showModal = ref(false);
+                const editingId = ref(null);
+                let sortableInstance = null;
+                let dbRef = null;
 
-                const filteredEvents = computed(() => {
-                    return events.value
-                        .filter(e => e.dayId === currentDayId.value)
-                        .sort((a, b) => (a.customOrder || 0) - (b.customOrder || 0));
-                });
+                const config = ref({ 
+                    title: 'THAILAND LUXE VOYAGE', 
+                    subtitle: 'Summer Adventure',
+                    days: [{ id: 'd1', label: 'DAY 1' }]
+                });
 
-                const initSortable = () => {
-                    const el = document.getElementById('sortable-events');
-                    if (!el) return;
-                    if (sortableInstance) sortableInstance.destroy();
-                    sortableInstance = Sortable.create(el, {
-                        animation: 150,
-                        handle: '.flex-1',
-                        onEnd: () => {
-                            const sortedIds = Array.from(el.querySelectorAll('[data-id]')).map(item => item.getAttribute('data-id'));
-                            events.value.forEach(ev => {
-                                const newIdx = sortedIds.indexOf(ev.id);
-                                if (newIdx !== -1) ev.customOrder = newIdx;
-                            });
-                            saveToCloud();
-                        }
-                    });
-                };
+                const events = ref([]);
+                const form = ref({ time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' });
+                const calc = ref({ thb: 0, twd: 0, aud: 0 });
+                const rates = ref({ thb_twd: 0.91, thb_aud: 0.045 });
 
-                const fetchWeather = async () => {
-                    try {
-                        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.51&current_weather=true&daily=precipitation_probability_max&timezone=Asia%2FBangkok');
-                        const data = await res.json();
-                        weather.value = { temp: Math.round(data.current_weather.temperature), rainChance: data.daily?.precipitation_probability_max?.[0] || 0 };
-                    } catch (e) {}
-                };
+                const joinRoom = () => {
+                    if (!roomInput.value.trim()) return;
+                    roomKey.value = `room_${roomInput.value.trim()}`;
+                    roomJoined.value = true;
+                    startSync();
+                    fetchWeather();
+                    fetchRates();
+                };
 
-                const fetchRates = async () => {
-                    try {
-                        const res = await fetch('https://open.er-api.com/v6/latest/THB');
-                        const data = await res.json();
-                        if (data.rates) {
-                            rates.value.thb_twd = data.rates.TWD.toFixed(2);
-                            rates.value.thb_aud = data.rates.AUD.toFixed(4);
-                        }
-                    } catch (e) {}
-                };
+                const startSync = () => {
+                    dbRef = db.ref(`rooms/${roomKey.value}`);
+                    dbRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            events.value = data.events ? Object.values(data.events) : [];
+                            if (data.config) {
+                                config.value = data.config;
+                                if (config.value.days && !config.value.days.find(d => d.id === currentDayId.value)) {
+                                    currentDayId.value = config.value.days[0].id;
+                                }
+                            }
+                        }
+                        nextTick(() => initSortable());
+                    });
+                };
 
-                const convertCurrency = (base) => {
-                    const val = calc.value[base] || 0;
-                    if (base === 'thb') {
-                        calc.value.twd = Math.round(val * rates.value.thb_twd);
-                        calc.value.aud = (val * rates.value.thb_aud).toFixed(2);
-                    } else if (base === 'twd') {
-                        const thb = val / rates.value.thb_twd;
-                        calc.value.thb = Math.round(thb);
-                        calc.value.aud = (thb * rates.value.thb_aud).toFixed(2);
-                    }
-                };
+                const saveToCloud = async () => {
+                    if (!dbRef) return;
+                    saving.value = true;
+                    const eventsObj = {};
+                    events.value.forEach(e => { eventsObj[e.id] = e; });
+                    try {
+                        await dbRef.set({ events: eventsObj, config: config.value });
+                        setTimeout(() => saving.value = false, 400);
+                    } catch (e) { 
+                        console.error('Save error:', e);
+                        saving.value = false; 
+                    }
+                };
 
-                const openAdd = () => {
-                    editingId.value = null;
-                    form.value = { time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' };
-                    showModal.value = true;
-                };
+                const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
 
-                const openEdit = (e) => {
-                    editingId.value = e.id;
-                    form.value = { ...e };
-                    showModal.value = true;
-                };
+                const t = (text) => {
+                    const d = { 
+                        '降雨機率': { en: 'Rain' }, '匯率試算': { en: 'Exchange' }, 'New Entry': { en: 'Add Place' }, 
+                        '編輯行程': { en: 'Edit Spot' }, '地圖資訊': { en: 'Map' }, '查看參考': { en: 'Info' }, 
+                        '標題': { en: 'Place' }, '內容': { en: 'Details' }, '泰銖': { en: 'THB' }, 
+                        '台幣': { en: 'TWD' }, '澳幣': { en: 'AUD' }, '時間': { en: 'Time' } 
+                    };
+                    return lang.value === 'zh' ? text : (d[text]?.en || text);
+                };
 
-                const saveEvent = () => {
-                    if (!form.value.location) return;
-                    const id = editingId.value || Date.now().toString();
-                    const eventData = { ...form.value, id, dayId: currentDayId.value, customOrder: editingId.value ? (events.value.find(e => e.id === id)?.customOrder || 0) : events.value.length };
-                    if (editingId.value) {
-                        const idx = events.value.findIndex(e => e.id === id);
-                        events.value[idx] = eventData;
-                    } else {
-                        events.value.push(eventData);
-                    }
-                    saveToCloud();
-                    showModal.value = false;
-                };
+                const filteredEvents = computed(() => {
+                    if (!events.value) return [];
+                    return events.value
+                        .filter(e => e.dayId === currentDayId.value)
+                        .map(e => ({
+                            ...e,
+                            timeDisplay: (e.time && e.time !== '待定') ? e.time : ''
+                        }))
+                        .sort((a, b) => {
+                            if (a.customOrder !== undefined && b.customOrder !== undefined) return a.customOrder - b.customOrder;
+                            return (a.timeDisplay || 'zz:zz').localeCompare(b.timeDisplay || 'zz:zz');
+                        });
+                });
 
-                const removeEvent = (id) => {
-                    events.value = events.value.filter(e => e.id !== id);
-                    saveToCloud();
-                };
+                const initSortable = () => {
+                    const el = document.getElementById('sortable-events');
+                    if (!el || sortableInstance) if (sortableInstance) sortableInstance.destroy();
 
-                const addDay = () => {
-                    const newId = 'd' + Date.now();
-                    config.value.days.push({ id: newId, label: 'DAY ' + (config.value.days.length + 1) });
-                    saveToCloud();
-                };
+                    sortableInstance = Sortable.create(el, {
+                        animation: 250,
+                        ghostClass: 'sortable-ghost',
+                        handle: '.glass-panel',
+                        onEnd: () => {
+                            const sortedIds = Array.from(el.querySelectorAll('[data-id]')).map(item => item.getAttribute('data-id'));
+                            events.value.forEach(ev => {
+                                const newIdx = sortedIds.indexOf(ev.id);
+                                if (newIdx !== -1) ev.customOrder = newIdx;
+                            });
+                            saveToCloud();
+                        }
+                    });
+                };
 
-                const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
-                const openUrl = (url) => { if (url) window.open(url.startsWith('http') ? url : 'https://' + url, '_blank'); };
-                const openRoute = (a, b) => { window.open(`https://www.google.com/maps/dir/${encodeURIComponent(a)}/${encodeURIComponent(b)}`, '_blank'); };
+                const fetchWeather = async () => {
+                    try {
+                        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.51&current_weather=true&daily=precipitation_probability_max&timezone=Asia%2FBangkok');
+                        const data = await res.json();
+                        weather.value = { 
+                            temp: Math.round(data.current_weather.temperature), 
+                            desc: 'Bangkok', 
+                            rainChance: data.daily?.precipitation_probability_max?.[0] || 0 
+                        };
+                    } catch (e) { console.error('Weather error:', e); }
+                };
 
-                onMounted(() => {
-                    const container = document.getElementById('petal-container');
-                    for (let i = 0; i < 15; i++) {
-                        const leaf = document.createElement('div');
-                        leaf.className = 'golden-leaf';
-                        leaf.style.left = Math.random() * 100 + 'vw';
-                        leaf.style.width = (Math.random() * 8 + 4) + 'px';
-                        leaf.style.height = leaf.style.width;
-                        leaf.style.animationDuration = (Math.random() * 7 + 5) + 's';
-                        leaf.style.animationDelay = (Math.random() * 5) + 's';
-                        container.appendChild(leaf);
-                    }
-                });
+                const fetchRates = async () => {
+                    try {
+                        const res = await fetch('https://open.er-api.com/v6/latest/THB');
+                        const data = await res.json();
+                        if (data.rates) {
+                            rates.value.thb_twd = data.rates.TWD.toFixed(2);
+                            rates.value.thb_aud = data.rates.AUD.toFixed(4);
+                        }
+                    } catch (e) { console.error('Exchange rates error:', e); }
+                };
 
-                return {
-                    roomJoined, roomInput, config, events, filteredEvents, currentDayId, 
-                    showModal, editingId, lang, form, calc, rates, saving, weather,
-                    joinRoom, toggleLang, openAdd, openEdit, saveEvent, removeEvent, addDay, convertCurrency, openUrl, openRoute, saveToCloud
-                };
-            }
-        }).mount('#app');
-    </script>
+                const saveEvent = async () => {
+                    const timeVal = (form.value.time && form.value.time !== '待定') ? form.value.time : '';
+                    const eventData = {
+                        id: editingId.value || Date.now().toString(),
+                        dayId: currentDayId.value,
+                        ...form.value,
+                        time: timeVal,
+                        customOrder: editingId.value ? (events.value.find(e => e.id === editingId.value)?.customOrder) : events.value.length
+                    };
+                    
+                    if (editingId.value) {
+                        const idx = events.value.findIndex(e => e.id === editingId.value);
+                        if (idx !== -1) events.value[idx] = eventData;
+                    } else {
+                        events.value.push(eventData);
+                    }
+                    await saveToCloud();
+                    showModal.value = false;
+                };
+
+                const openEdit = (event) => {
+                    editingId.value = event.id;
+                    form.value = { ...event, time: (event.time && event.time !== '待定') ? event.time : '', routeName: event.routeName || '', videoName: event.videoName || '' };
+                    showModal.value = true;
+                };
+
+                const removeEvent = (id) => { 
+                    events.value = events.value.filter(e => e.id !== id); 
+                    saveToCloud(); 
+                };
+
+                const addDay = () => { 
+                    if (!config.value.days) config.value.days = [];
+                    config.value.days.push({ id: 'd' + Date.now(), label: 'DAY ' + (config.value.days.length + 1) }); 
+                    saveToCloud(); 
+                };
+
+                const removeLastDay = () => { 
+                    if(config.value.days.length > 1) { 
+                        const removed = config.value.days.pop();
+                        events.value = events.value.filter(e => e.dayId !== removed.id);
+                        if (currentDayId.value === removed.id) currentDayId.value = config.value.days[0].id;
+                        saveToCloud(); 
+                    } 
+                };
+
+                const openUrl = (url) => { if (url) window.open(url.startsWith('http') ? url : 'https://' + url, '_blank'); };
+                const openRoute = (a, b) => { window.open(`https://www.google.com/maps/dir/${encodeURIComponent(a)}/${encodeURIComponent(b)}`, '_blank'); };
+
+                const convertCurrency = (base) => {
+                    const val = calc.value[base] || 0;
+                    if (base === 'thb') { calc.value.twd = Math.round(val * rates.value.thb_twd); calc.value.aud = (val * rates.value.thb_aud).toFixed(2); }
+                    else if (base === 'twd') { const thb = val / rates.value.thb_twd; calc.value.thb = Math.round(thb); calc.value.aud = (thb * rates.value.thb_aud).toFixed(2); }
+                    else if (base === 'aud') { const thb = val / rates.value.thb_aud; calc.value.thb = Math.round(thb); calc.value.twd = Math.round(thb * rates.value.thb_twd); }
+                };
+
+                const createPetals = () => {
+                    const container = document.getElementById('petal-container');
+                    if (!container) return;
+                    for (let i = 0; i < 25; i++) {
+                        const p = document.createElement('div');
+                        p.className = 'golden-petal';
+                        p.style.left = Math.random() * 100 + 'vw';
+                        p.style.animationDuration = (Math.random() * 7 + 6) + 's';
+                        p.style.animationDelay = (Math.random() * 8) + 's';
+                        p.style.width = (Math.random() * 8 + 6) + 'px';
+                        p.style.height = (Math.random() * 12 + 8) + 'px';
+                        p.style.opacity = Math.random() * 0.6 + 0.2;
+                        container.appendChild(p);
+                    }
+                };
+
+                onMounted(() => {
+                    createPetals();
+                });
+
+                return { 
+                    roomJoined, roomInput, saving, config, events, filteredEvents, currentDayId, showModal, editingId, lang, weather, calc, rates, form, 
+                    joinRoom, toggleLang, t, saveToCloud, addDay, removeLastDay, openUrl, openRoute,
+                    openAdd: () => { editingId.value = null; form.value = { time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' }; showModal.value = true; },
+                    openEdit, saveEvent, removeEvent, convertCurrency 
+                };
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
+
