@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼谷旅遊行程表</title>
+    <title>泰國旅遊行程表 - 究極金箔版</title>
+    <!-- 使用 Firebase Compatibility SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -11,498 +12,413 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
         
-        :root {
-            --thai-gold: #D4AF37;
-            --thai-gold-light: #F4DF4E;
-            --thai-accent: #B8860B;
-            --thai-bg: #FAF9F6;
-        }
-
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--thai-bg);
-            color: #3d3d3d;
-            overflow-x: hidden;
-        }
-
-        /* 蓮花瓣飄落動畫 - 優化流暢度 */
-        .petal {
-            position: fixed;
-            top: -10%;
-            user-select: none;
-            pointer-events: none;
-            z-index: 99;
-            color: var(--thai-gold);
-            filter: drop-shadow(0 0 2px rgba(212, 175, 55, 0.3));
+        [v-cloak] { display: none !important; }
+        
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background: radial-gradient(circle at center, #fffef0 0%, #fff9db 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #334155;
+            margin: 0;
         }
 
         @keyframes fall {
-            0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
-            10% { opacity: 0.7; }
-            90% { opacity: 0.7; }
-            100% { transform: translateY(110vh) rotate(720deg) translateX(50px); opacity: 0; }
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+            15% { opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+        
+        .golden-leaf { 
+            position: fixed; pointer-events: none; z-index: 1; animation: fall linear infinite;
+            background: linear-gradient(135deg, #fef08a 0%, #fbbf24 50%, #b45309 100%);
+            border-radius: 2px 10px;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
         }
 
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            box-shadow: 0 20px 50px rgba(133, 77, 14, 0.1);
+        }
+        
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #b45309 0%, #fbbf24 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .nav-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid transparent;
-        }
-        .nav-card.active {
-            border-color: var(--thai-gold);
-            background: #fff;
-            transform: translateY(-8px);
-            box-shadow: 0 15px 25px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-thai {
-            background: linear-gradient(135deg, #B8860B, #D4AF37, #F4DF4E);
-            background-size: 200% 200%;
-            animation: gradientBG 5s ease infinite;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .btn-thai:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .currency-input {
-            @apply w-full bg-gray-50/50 border border-gray-100 rounded-xl px-3 py-2 text-sm font-bold transition-all;
-            outline: none;
-        }
-        .currency-input:focus {
-            @apply border-yellow-500 bg-white shadow-inner;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .action-btn { background: white; border: 1px solid rgba(212, 175, 55, 0.3); transition: all 0.2s; }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2); }
     </style>
 </head>
 <body>
-    <div id="app" class="min-h-screen pb-24">
-        <!-- 蓮花瓣背景 -->
-        <div v-for="n in 18" :key="n" class="petal" :style="petalStyle()">
-            <i class="fas fa-leaf"></i>
+    <div id="petal-container"></div>
+
+    <div id="app" v-cloak>
+        <!-- 🔐 登入頁 -->
+        <div v-if="!roomJoined" class="min-h-screen flex items-center justify-center px-6 relative z-50">
+            <div class="glass-panel w-full max-w-sm rounded-[3rem] p-12 shadow-2xl text-center space-y-8">
+                <div>
+                    <div class="text-6xl mb-6">🏝️🐘</div>
+                    <p class="text-[12px] font-bold text-yellow-600 uppercase tracking-[0.4em]">Thailand Trip</p>
+                    <h1 class="text-3xl font-light text-slate-700 mt-2">Golden <span class="italic font-serif">2026</span></h1>
+                </div>
+                <div class="space-y-4 text-left">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">房間暗號</label>
+                    <input v-model="roomInput" @keyup.enter="joinRoom" type="password" placeholder="輸入您的旅遊暗號..."
+                        class="w-full bg-white border border-slate-100 rounded-2xl py-4 px-5 text-base focus:outline-none focus:border-yellow-300 text-center tracking-widest shadow-sm">
+                </div>
+                <button @click="joinRoom" :disabled="!roomInput"
+                    class="w-full py-5 bg-slate-800 text-white rounded-2xl text-[12px] font-bold uppercase disabled:opacity-30 hover:bg-slate-700 transition-all shadow-lg">
+                    進入行程 →
+                </button>
+            </div>
         </div>
 
-        <!-- Header -->
-        <header class="relative h-[420px] overflow-hidden">
-            <img :src="config.coverUrl || 'https://images.unsplash.com/photo-1508009603885-50cf7c579367?q=80&w=1920'" 
-                 class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#FAF9F6] via-black/20 to-transparent flex flex-col justify-end p-8 md:p-20">
-                <div class="max-w-6xl mx-auto w-full">
-                    <h1 class="text-5xl md:text-7xl font-black text-white mb-6 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] italic">
-                        {{ config.title || '曼谷・泰式浪漫之旅' }}
-                    </h1>
-                    <div class="flex flex-wrap gap-4">
-                        <span class="flex items-center gap-3 bg-white/30 backdrop-blur-xl px-6 py-3 rounded-2xl text-white font-bold border border-white/20 shadow-xl">
-                            <i class="fas fa-calendar-day text-yellow-300"></i> {{ config.dateRange || '2024.11.01 - 11.05' }}
-                        </span>
-                        <span class="flex items-center gap-3 bg-white/30 backdrop-blur-xl px-6 py-3 rounded-2xl text-white font-bold border border-white/20 shadow-xl">
-                            <i class="fas fa-location-arrow text-orange-300"></i> BANGKOK, TH
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <label class="absolute top-6 right-6 bg-white/20 hover:bg-white/40 backdrop-blur-xl text-white p-4 rounded-2xl cursor-pointer transition-all shadow-2xl border border-white/30">
-                <i class="fas fa-image text-xl"></i>
-                <input type="file" @change="handleCoverUpload" class="hidden" accept="image/*">
-            </label>
-        </header>
-
-        <main class="max-w-6xl mx-auto px-6 -mt-16 relative z-10">
-            <!-- 資訊看板 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <!-- 天氣資訊 -->
-                <div class="glass-morphism p-8 flex flex-col justify-between border-b-4 border-b-[#D4AF37]">
-                    <div class="flex justify-between items-start">
-                        <p class="text-xs font-black text-[#B8860B] tracking-widest uppercase">Weather Info</p>
-                        <i :class="weatherIcon" class="text-4xl text-yellow-500 animate-pulse"></i>
-                    </div>
-                    <div class="mt-4">
-                        <h3 class="text-4xl font-black text-gray-800">{{ weather.temp }}°C</h3>
-                        <p class="text-gray-500 font-bold">{{ weather.condition }}</p>
-                        <p class="text-blue-500 text-xs mt-2 font-bold"><i class="fas fa-tint mr-1"></i> 降雨機率 {{ weather.rainProb }}%</p>
-                    </div>
-                </div>
-
-                <!-- 匯率轉換 (新增澳幣 AUD) -->
-                <div class="glass-morphism p-8 border-b-4 border-b-[#D4AF37]">
-                    <p class="text-xs font-black text-[#B8860B] tracking-widest uppercase mb-4">Currency Exchange</p>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <span class="w-10 text-[10px] font-black text-gray-400">TWD</span>
-                            <input type="number" v-model="exchange.twd" @input="convertFrom('twd')" class="currency-input">
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="w-10 text-[10px] font-black text-[#B8860B]">THB</span>
-                            <input type="number" v-model="exchange.thb" @input="convertFrom('thb')" class="currency-input border-yellow-200">
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="w-10 text-[10px] font-black text-blue-500">AUD</span>
-                            <input type="number" v-model="exchange.aud" @input="convertFrom('aud')" class="currency-input border-blue-100">
+        <!-- 🗺️ 主行程頁 -->
+        <div v-else class="min-h-screen pb-20 relative z-10">
+            <header class="glass-panel p-8 sticky top-0 z-50 rounded-b-[3rem] border-b-2 border-yellow-400/30">
+                <div class="max-w-4xl mx-auto flex justify-between items-center">
+                    <div class="flex-1 mr-4">
+                        <input v-model="config.title" @change="saveToCloud" class="bg-transparent border-none outline-none gold-gradient-text font-black tracking-widest text-sm uppercase block w-full">
+                        <input v-model="config.subtitle" @change="saveToCloud" class="bg-transparent border-none outline-none text-3xl font-serif italic text-slate-800 block w-full">
+                        <!-- 🌤️ 天氣顯示區 -->
+                        <div class="flex items-center gap-2 text-[11px] text-slate-400 font-bold mt-3">
+                            <i class="fa-solid fa-cloud-sun text-yellow-500"></i>
+                            <span v-if="weather">
+                                {{ weather.desc }}: {{ weather.temp }}°C | {{ lang === 'zh' ? '降雨機率' : 'Rain' }}: {{ weather.rainChance }}%
+                            </span>
+                            <span v-else class="animate-pulse">Loading weather...</span>
                         </div>
                     </div>
-                    <p class="text-[9px] text-gray-400 mt-4 text-center italic">1 TWD ≈ {{ exchange.rateTHB }} THB / {{ exchange.rateAUD }} AUD</p>
-                </div>
-
-                <!-- 預算統計 -->
-                <div class="glass-morphism p-8 border-b-4 border-b-[#D4AF37]">
-                    <p class="text-xs font-black text-[#B8860B] tracking-widest uppercase mb-2">Travel Budget</p>
-                    <h3 class="text-3xl font-black text-gray-800">฿ {{ totalCost.toLocaleString() }}</h3>
-                    <p class="text-xs text-gray-400 mt-1">約 AUD {{ (totalCost * (exchange.rateAUD/exchange.rateTHB)).toFixed(2) }}</p>
-                    <div class="w-full bg-gray-100 rounded-full h-3 mt-6 shadow-inner">
-                        <div class="btn-thai h-3 rounded-full transition-all duration-700" 
-                             :style="{ width: budgetPercent + '%' }"></div>
-                    </div>
-                    <div class="flex justify-between mt-2 font-black text-[10px] text-gray-400 uppercase">
-                        <span>Used</span>
-                        <span>Limit: ฿ {{ config.budget || 50000 }}</span>
+                    <div class="flex flex-col items-end gap-2 shrink-0">
+                        <button @click="toggleLang" class="text-[10px] font-black text-slate-400 border-b border-yellow-300 px-2 py-1 uppercase">
+                            {{ lang === 'zh' ? 'ENGLISH' : '繁中' }}
+                        </button>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                            <span :class="saving ? 'text-red-400 animate-pulse' : 'text-green-500'">{{ saving ? 'Syncing...' : 'Connected' }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <!-- 天數導覽 -->
-            <div class="flex gap-5 overflow-x-auto pb-8 scrollbar-hide">
-                <button v-for="day in days" :key="day.id" 
-                        @click="currentDayId = day.id"
-                        class="nav-card min-w-[130px] glass-morphism p-6 text-center cursor-pointer flex-shrink-0"
-                        :class="{ 'active': currentDayId === day.id }">
-                    <p class="text-[10px] font-black tracking-widest mb-1" :class="currentDayId === day.id ? 'text-[#B8860B]' : 'text-gray-400'">DAY</p>
-                    <p class="text-3xl font-black" :class="currentDayId === day.id ? 'text-[#B8860B]' : 'text-gray-600'">{{ day.num }}</p>
-                </button>
-                <button @click="addDay" class="min-w-[60px] glass-morphism flex items-center justify-center text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 transition-all">
-                    <i class="fas fa-plus-circle text-2xl"></i>
-                </button>
-            </div>
+            <main class="max-w-4xl mx-auto p-6 mt-8 space-y-8">
+                <!-- 匯率工具 -->
+                <div class="glass-panel p-8 rounded-[2.5rem] grid grid-cols-3 gap-4">
+                    <div v-for="curr in ['thb', 'twd', 'aud']" :key="curr" class="text-center">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">{{ lang === 'zh' ? (curr === 'thb' ? '泰銖' : (curr === 'twd' ? '台幣' : '澳幣')) : curr }}</label>
+                        <input v-model.number="calc[curr]" @input="convertCurrency(curr)" type="number" 
+                            class="w-full bg-transparent border-b border-yellow-200 text-center text-lg font-bold py-2 focus:border-yellow-500 outline-none">
+                    </div>
+                </div>
 
-            <!-- 行程列表 -->
-            <div class="space-y-8 mt-4">
-                <div class="flex items-center justify-between px-2">
-                    <h2 class="text-3xl font-black flex items-center gap-4 italic text-gray-800">
-                        <span class="bg-[#D4AF37] text-white px-4 py-1 rounded-lg not-italic text-xl">DAY {{ currentDayNum }}</span>
-                        SCHEDULE
-                    </h2>
-                    <button @click="openAddModal" class="btn-thai px-8 py-3 rounded-2xl text-sm font-black shadow-xl uppercase tracking-wider">
-                        <i class="fas fa-plus mr-2"></i> Add Stop
+                <!-- 天數切換 -->
+                <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 items-center">
+                    <div class="flex bg-white/50 p-2 rounded-full gap-2">
+                        <button v-for="day in config.days" :key="day.id" @click="currentDayId = day.id"
+                            :class="['px-6 py-3 rounded-full whitespace-nowrap text-xs font-bold transition-all', currentDayId === day.id ? 'bg-yellow-600 text-white shadow-lg' : 'text-slate-400']">
+                            {{ day.label }}
+                        </button>
+                    </div>
+                    <button @click="addDay" class="w-10 h-10 shrink-0 bg-white border border-yellow-200 text-yellow-600 rounded-full">+</button>
+                </div>
+
+                <!-- 行程列表 -->
+                <div id="sortable-events" class="space-y-6">
+                    <div v-for="event in filteredEvents" :key="event.id" :data-id="event.id" class="flex gap-4 group">
+                        <div class="w-16 shrink-0 text-center pt-2">
+                            <div class="text-xs font-black text-yellow-600 uppercase tracking-tighter">{{ event.time || '--:--' }}</div>
+                            <div class="w-px h-full bg-yellow-100 mx-auto mt-2"></div>
+                        </div>
+                        <div @click="openEdit(event)" class="flex-1 glass-panel p-6 rounded-[2rem] relative cursor-pointer hover:shadow-xl transition-all border-l-4 border-l-yellow-500">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-bold text-slate-800">{{ event.location || '未命名地點' }}</h3>
+                                <button @click.stop="removeEvent(event.id)" class="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-slate-500 mt-2 whitespace-pre-line leading-relaxed">{{ event.desc }}</p>
+                            
+                            <!-- 功能按鈕區 -->
+                            <div class="flex flex-wrap gap-2 mt-5">
+                                <button v-if="event.mapUrl" @click.stop="openUrl(event.mapUrl)" class="action-btn px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 flex items-center gap-2 uppercase">
+                                    <i class="fa-solid fa-location-dot text-red-400"></i> {{ lang === 'zh' ? '開啟地圖' : 'Map' }}
+                                </button>
+                                <button v-if="event.routeA && event.routeB" @click.stop="openRoute(event.routeA, event.routeB)" class="action-btn px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 flex items-center gap-2 uppercase">
+                                    <i class="fa-solid fa-route text-blue-400"></i> {{ event.routeName || (event.routeA + ' → ' + event.routeB) }}
+                                </button>
+                                <button v-if="event.videoUrl" @click.stop="openUrl(event.videoUrl)" class="action-btn px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 flex items-center gap-2 uppercase">
+                                    <i class="fa-solid fa-play text-orange-400"></i> {{ event.videoName || (lang === 'zh' ? '參考連結' : 'Link') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button @click="openAdd" class="w-full py-8 border-2 border-dashed border-yellow-200 rounded-[2rem] text-yellow-600/30 font-bold hover:bg-yellow-50/50 transition-all uppercase text-[10px] tracking-widest">
+                        + {{ lang === 'zh' ? '新增行程' : 'ADD NEW ENTRY' }}
                     </button>
                 </div>
+            </main>
 
-                <div id="schedule-list" class="space-y-6">
-                    <div v-for="item in currentDayItems" :key="item.id" :data-id="item.id"
-                         class="schedule-item group glass-morphism p-6 hover:shadow-2xl transition-all border-l-[12px] border-l-[#D4AF37] flex gap-8 items-start">
-                        <div class="flex flex-col items-center gap-3 pt-2">
-                            <div class="cursor-move text-gray-200 hover:text-[#B8860B] transition-colors">
-                                <i class="fas fa-grip-lines text-xl"></i>
+            <!-- 編輯視窗 -->
+            <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" @click="showModal = false"></div>
+                <div class="relative bg-white w-full max-w-lg rounded-[3rem] p-8 shadow-2xl space-y-6 overflow-y-auto max-h-[90vh] no-scrollbar">
+                    <h2 class="text-xl font-bold text-center gold-gradient-text">{{ editingId ? '編輯行程' : '新增行程' }}</h2>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 ml-1">時間</label>
+                                <input v-model="form.time" placeholder="09:00" class="w-full border-b py-2 px-1 outline-none focus:border-yellow-500">
                             </div>
-                            <span class="text-xs font-black bg-gray-100 px-2 py-1 rounded text-gray-500">{{ item.time }}</span>
-                        </div>
-                        
-                        <div class="flex-1">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="text-2xl font-black text-gray-800 group-hover:text-[#B8860B] transition-colors">{{ item.title }}</h4>
-                                    <p class="text-sm text-gray-400 mt-2 flex items-center gap-2 font-bold">
-                                        <i class="fas fa-map-marker-alt text-[#D4AF37]"></i> {{ item.location }}
-                                    </p>
-                                </div>
-                                <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                    <button @click="editItem(item)" class="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-sm"><i class="fas fa-pen text-sm"></i></button>
-                                    <button @click="deleteItem(item.id)" class="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><i class="fas fa-trash text-sm"></i></button>
-                                </div>
-                            </div>
-                            <div v-if="item.note" class="mt-4 p-4 bg-gray-50/50 rounded-2xl text-sm text-gray-600 leading-relaxed border border-gray-100 italic">
-                                {{ item.note }}
-                            </div>
-                            <div class="mt-5 flex flex-wrap gap-3">
-                                <span v-if="item.cost" class="bg-yellow-100/50 text-[#B8860B] text-[10px] font-black px-4 py-2 rounded-xl border border-yellow-200 uppercase tracking-tighter">
-                                    <i class="fas fa-wallet mr-2"></i> ฿ {{ item.cost.toLocaleString() }}
-                                </span>
-                                <span v-if="item.tag" class="bg-white text-gray-400 text-[10px] font-black px-4 py-2 rounded-xl border border-gray-100 shadow-sm uppercase tracking-widest">
-                                    # {{ item.tag }}
-                                </span>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 ml-1">地點名稱</label>
+                                <input v-model="form.location" placeholder="地點名稱" class="w-full border-b py-2 px-1 outline-none focus:border-yellow-500">
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div v-if="currentDayItems.length === 0" class="text-center py-24 glass-morphism border-2 border-dashed border-yellow-200">
-                    <div class="text-7xl text-yellow-200/50 mb-6 animate-bounce"><i class="fas fa-map-marked-alt"></i></div>
-                    <p class="text-gray-400 font-bold tracking-widest uppercase">Start your Bangkok adventure now</p>
-                </div>
-            </div>
-        </main>
+                        <div class="bg-yellow-50/50 p-4 rounded-2xl space-y-3">
+                            <label class="text-[10px] font-bold text-yellow-700 uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-map-signs"></i> 路線規劃 (選填)
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input v-model="form.routeA" placeholder="起點" class="flex-1 bg-white border border-yellow-100 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-yellow-400">
+                                <span class="text-slate-300">→</span>
+                                <input v-model="form.routeB" placeholder="終點" class="flex-1 bg-white border border-yellow-100 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-yellow-400">
+                            </div>
+                            <input v-model="form.routeName" placeholder="按鈕顯示名稱" class="w-full bg-white border border-yellow-100 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-yellow-400 mt-1">
+                        </div>
 
-        <!-- 新增/編輯 Modal -->
-        <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-md" @click="showModal = false"></div>
-            <div class="relative w-full max-w-xl glass-morphism bg-white p-10 shadow-2xl">
-                <h3 class="text-3xl font-black mb-8 text-gray-800 border-b-2 border-yellow-100 pb-6 flex items-center gap-4">
-                    <i class="fas fa-paper-plane text-[#D4AF37]"></i>
-                    {{ isEditing ? 'Edit Schedule' : 'New Adventure' }}
-                </h3>
-                <div class="grid grid-cols-2 gap-6 mb-8">
-                    <div class="col-span-2">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Spot Name</label>
-                        <input v-model="form.title" type="text" placeholder="例如：大皇宮" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-yellow-400 focus:bg-white outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Time</label>
-                        <input v-model="form.time" type="time" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-yellow-400 focus:bg-white outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cost (THB)</label>
-                        <input v-model.number="form.cost" type="number" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-yellow-400 focus:bg-white outline-none font-bold">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Navigation / Address</label>
-                        <input v-model="form.location" type="text" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-yellow-400 focus:bg-white outline-none font-bold">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quick Note</label>
-                        <textarea v-model="form.note" rows="3" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-yellow-400 focus:bg-white outline-none font-bold"></textarea>
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <button @click="showModal = false" class="flex-1 py-4 rounded-2xl font-black text-gray-400 hover:bg-gray-50 transition-colors uppercase tracking-widest">Cancel</button>
-                    <button @click="saveItem" class="flex-[2] btn-thai py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest">Save Schedule</button>
-                </div>
-            </div>
-        </div>
+                        <div class="space-y-3 bg-orange-50/30 p-4 rounded-2xl">
+                            <label class="text-[10px] font-bold text-orange-700 uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-link"></i> 參考連結 (影片/部落格)
+                            </label>
+                            <input v-model="form.videoUrl" placeholder="貼上網址" class="w-full border-b py-1 text-sm focus:outline-none border-orange-100 bg-transparent">
+                            <input v-model="form.videoName" placeholder="顯示名稱" class="w-full border-b py-1 text-sm focus:outline-none border-orange-100 italic opacity-70 bg-transparent">
+                        </div>
 
-        <!-- 浮動按鈕 -->
-        <div class="fixed bottom-8 right-8 flex flex-col gap-4">
-            <button @click="openConfigModal" class="w-16 h-16 bg-white text-[#B8860B] rounded-2xl shadow-2xl flex items-center justify-center hover:rotate-180 transition-all duration-700 border border-yellow-100 group">
-                <i class="fas fa-sun text-3xl group-hover:scale-110"></i>
-            </button>
-        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 ml-1">地圖連結 (定位)</label>
+                            <input v-model="form.mapUrl" placeholder="Google Maps URL" class="w-full border-b py-2 px-1 outline-none focus:border-yellow-500">
+                        </div>
 
-        <!-- 全域設定 Modal -->
-        <div v-if="showConfigModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-md" @click="showConfigModal = false"></div>
-            <div class="relative w-full max-w-md glass-morphism bg-white p-10 shadow-2xl">
-                <h3 class="text-2xl font-black mb-8 border-b pb-4 uppercase tracking-widest text-gray-800">Master Config</h3>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Trip Title</label>
-                        <input v-model="config.title" type="text" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white outline-none font-bold">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 ml-1">行程備註</label>
+                            <textarea v-model="form.desc" placeholder="詳細備註..." class="w-full border-b py-2 px-1 outline-none focus:border-yellow-500 h-32 resize-none"></textarea>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Duration</label>
-                        <input v-model="config.dateRange" type="text" placeholder="YYYY.MM.DD - MM.DD" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-2">Total Budget (THB)</label>
-                        <input v-model.number="config.budget" type="number" class="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white outline-none font-bold">
-                    </div>
+                    <button @click="saveEvent" class="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 shadow-xl transition-all">儲存行程</button>
                 </div>
-                <button @click="updateConfig" class="w-full mt-10 btn-thai py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl">Confirm Settings</button>
             </div>
         </div>
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        firebase.initializeApp(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "", 
+            authDomain: "sakura-db2eb.firebaseapp.com",
+            databaseURL: "https://sakura-db2eb-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sakura-db2eb",
+            appId: "1:1018635903034:web:b9cff8697598f66be55503"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
-        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-travel-app';
-        const appId = rawAppId.replace(/[.#$[\]]/g, '_');
 
         createApp({
             setup() {
-                const config = ref({ title: '', dateRange: '', budget: 50000, coverUrl: '' });
-                const days = ref([{ id: 'day1', num: 1 }]);
-                const currentDayId = ref('day1');
-                const scheduleItems = ref([]);
+                const roomJoined = ref(false);
+                const roomInput = ref('');
+                const roomKey = ref('');
+                const lang = ref('zh');
+                const currentDayId = ref('d1');
                 const showModal = ref(false);
-                const showConfigModal = ref(false);
-                const isEditing = ref(false);
                 const editingId = ref(null);
-                
-                const weather = ref({ temp: 33, condition: '泰國豔陽天', rainProb: 15 });
-                const exchange = ref({ 
-                    twd: 1000, 
-                    thb: 0, 
-                    aud: 0,
-                    rateTHB: 1.08, // 1 TWD = 1.08 THB
-                    rateAUD: 0.048 // 1 TWD = 0.048 AUD
+                const saving = ref(false);
+                const weather = ref(null);
+                let sortableInstance = null;
+
+                const config = ref({ 
+                    title: 'THAI GRAND VOYAGE', 
+                    subtitle: 'Golden Memories',
+                    days: [{ id: 'd1', label: 'DAY 1' }]
                 });
 
-                const form = ref({
-                    title: '', time: '10:00', cost: 0, location: '', note: '', tag: '景點'
-                });
+                const events = ref([]);
+                const form = ref({ time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' });
+                const calc = ref({ thb: 0, twd: 0, aud: 0 });
+                const rates = ref({ thb_twd: 0.92, thb_aud: 0.046 });
 
-                const fetchWeatherData = () => {
-                    const conditions = ['晴空萬里', '熱浪襲來', '多雲轉晴', '微風徐徐'];
-                    weather.value = {
-                        temp: Math.floor(Math.random() * (36 - 30) + 30),
-                        condition: conditions[Math.floor(Math.random() * conditions.length)],
-                        rainProb: Math.floor(Math.random() * 30)
-                    };
+                const joinRoom = () => {
+                    const cleanRoom = roomInput.value.trim();
+                    if (!cleanRoom) return;
+                    roomKey.value = `room_${cleanRoom}`;
+                    roomJoined.value = true;
+                    
+                    const dbRef = db.ref(`rooms/${roomKey.value}`);
+                    dbRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            if (data.events) events.value = Object.values(data.events);
+                            if (data.config) config.value = data.config;
+                        }
+                        nextTick(() => initSortable());
+                    });
+                    fetchRates();
+                    fetchWeather();
                 };
 
-                // 三方匯率換算邏輯
-                const convertFrom = (type) => {
-                    if (type === 'twd') {
-                        exchange.value.thb = parseFloat((exchange.value.twd * exchange.value.rateTHB).toFixed(2));
-                        exchange.value.aud = parseFloat((exchange.value.twd * exchange.value.rateAUD).toFixed(2));
-                    } else if (type === 'thb') {
-                        exchange.value.twd = parseFloat((exchange.value.thb / exchange.value.rateTHB).toFixed(2));
-                        exchange.value.aud = parseFloat((exchange.value.twd * exchange.value.rateAUD).toFixed(2));
-                    } else if (type === 'aud') {
-                        exchange.value.twd = parseFloat((exchange.value.aud / exchange.value.rateAUD).toFixed(2));
-                        exchange.value.thb = parseFloat((exchange.value.twd * exchange.value.rateTHB).toFixed(2));
+                const saveToCloud = async () => {
+                    if (!roomKey.value) return;
+                    saving.value = true;
+                    const eventsObj = {};
+                    events.value.forEach(e => { eventsObj[e.id] = e; });
+                    try {
+                        await db.ref(`rooms/${roomKey.value}`).set({
+                            events: eventsObj,
+                            config: config.value
+                        });
+                        setTimeout(() => saving.value = false, 500);
+                    } catch (e) {
+                        saving.value = false;
                     }
                 };
 
-                const petalStyle = () => {
-                    const duration = Math.random() * 8 + 6;
-                    const delay = Math.random() * 15;
-                    const left = Math.random() * 100;
-                    const fontSize = Math.random() * 12 + 12;
-                    return {
-                        left: `${left}%`,
-                        fontSize: `${fontSize}px`,
-                        animation: `fall ${duration}s linear ${delay}s infinite`,
-                    };
-                };
+                const filteredEvents = computed(() => {
+                    return events.value
+                        .filter(e => e.dayId === currentDayId.value)
+                        .sort((a, b) => {
+                            if (a.customOrder !== undefined && b.customOrder !== undefined) return a.customOrder - b.customOrder;
+                            return (a.time || '99:99').localeCompare(b.time || '99:99');
+                        });
+                });
 
-                const loadData = () => {
-                    db.ref(`artifacts/${appId}/config`).on('value', snap => { if(snap.val()) config.value = snap.val(); });
-                    db.ref(`artifacts/${appId}/days`).on('value', snap => { if(snap.val()) days.value = Object.values(snap.val()); });
-                    db.ref(`artifacts/${appId}/items`).on('value', snap => {
-                        if(snap.val()) scheduleItems.value = Object.values(snap.val());
+                const initSortable = () => {
+                    const el = document.getElementById('sortable-events');
+                    if (!el) return;
+                    if (sortableInstance) sortableInstance.destroy();
+                    sortableInstance = Sortable.create(el, {
+                        animation: 150,
+                        onEnd: () => {
+                            const sortedIds = Array.from(el.querySelectorAll('[data-id]')).map(item => item.getAttribute('data-id'));
+                            events.value.forEach(ev => {
+                                const newIdx = sortedIds.indexOf(ev.id);
+                                if (newIdx !== -1) ev.customOrder = newIdx;
+                            });
+                            saveToCloud();
+                        }
                     });
                 };
 
-                const updateConfig = () => {
-                    db.ref(`artifacts/${appId}/config`).set(config.value);
-                    showConfigModal.value = false;
+                const fetchWeather = async () => {
+                    try {
+                        // 抓取曼谷天氣 (Latitude: 13.75, Longitude: 100.51)
+                        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.51&current_weather=true&daily=precipitation_probability_max&timezone=Asia%2FBangkok');
+                        const data = await res.json();
+                        weather.value = { 
+                            temp: Math.round(data.current_weather.temperature), 
+                            desc: 'Bangkok', 
+                            rainChance: data.daily?.precipitation_probability_max?.[0] || 0 
+                        };
+                    } catch (e) {
+                        console.error('Weather Fetch Error');
+                    }
                 };
 
-                const addDay = () => {
-                    const newDayNum = days.value.length + 1;
-                    const newDay = { id: 'day' + Date.now(), num: newDayNum };
-                    db.ref(`artifacts/${appId}/days/${newDay.id}`).set(newDay);
+                const fetchRates = async () => {
+                    try {
+                        const res = await fetch('https://open.er-api.com/v6/latest/THB');
+                        const data = await res.json();
+                        if (data.rates) {
+                            rates.value.thb_twd = data.rates.TWD.toFixed(2);
+                            rates.value.thb_aud = data.rates.AUD.toFixed(4);
+                        }
+                    } catch (e) {}
                 };
 
-                const openAddModal = () => {
-                    isEditing.value = false;
-                    form.value = { title: '', time: '10:00', cost: 0, location: '', note: '', tag: '景點' };
+                const convertCurrency = (base) => {
+                    const val = calc.value[base] || 0;
+                    if (base === 'thb') {
+                        calc.value.twd = Math.round(val * rates.value.thb_twd);
+                        calc.value.aud = (val * rates.value.thb_aud).toFixed(2);
+                    } else if (base === 'twd') {
+                        const thb = val / rates.value.thb_twd;
+                        calc.value.thb = Math.round(thb);
+                        calc.value.aud = (thb * rates.value.thb_aud).toFixed(2);
+                    }
+                };
+
+                const openAdd = () => {
+                    editingId.value = null;
+                    form.value = { time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' };
                     showModal.value = true;
                 };
 
-                const saveItem = () => {
-                    const id = isEditing.value ? editingId.value : 'item' + Date.now();
-                    const newItem = { ...form.value, id, dayId: currentDayId.value };
-                    db.ref(`artifacts/${appId}/items/${id}`).set(newItem);
+                const openEdit = (e) => {
+                    editingId.value = e.id;
+                    form.value = { ...e };
+                    showModal.value = true;
+                };
+
+                const saveEvent = () => {
+                    if (!form.value.location) return;
+                    const eventData = { 
+                        ...form.value, 
+                        id: editingId.value || Date.now().toString(), 
+                        dayId: currentDayId.value,
+                        customOrder: editingId.value ? (events.value.find(e => e.id === editingId.value)?.customOrder) : events.value.length
+                    };
+
+                    if (editingId.value) {
+                        const idx = events.value.findIndex(e => e.id === editingId.value);
+                        events.value[idx] = eventData;
+                    } else {
+                        events.value.push(eventData);
+                    }
+                    saveToCloud();
                     showModal.value = false;
                 };
 
-                const editItem = (item) => {
-                    isEditing.value = true;
-                    editingId.value = item.id;
-                    form.value = { ...item };
-                    showModal.value = true;
+                const removeEvent = (id) => {
+                    events.value = events.value.filter(e => e.id !== id);
+                    saveToCloud();
                 };
 
-                const deleteItem = (id) => {
-                    if(confirm('確定要移除此段行程嗎？')) db.ref(`artifacts/${appId}/items/${id}`).remove();
+                const addDay = () => {
+                    const newId = 'd' + Date.now();
+                    config.value.days.push({ id: newId, label: 'DAY ' + (config.value.days.length + 1) });
+                    saveToCloud();
                 };
 
-                const handleCoverUpload = (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const max_width = 1600;
-                            let width = img.width;
-                            let height = img.height;
-                            if (width > max_width) {
-                                height *= max_width / width;
-                                width = max_width;
-                            }
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            config.value.coverUrl = canvas.toDataURL('image/jpeg', 0.85);
-                            updateConfig();
-                        };
-                        img.src = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                };
-
-                const initSortable = () => {
-                    const el = document.getElementById('schedule-list');
-                    if (!el) return;
-                    Sortable.create(el, {
-                        animation: 300,
-                        handle: '.cursor-move',
-                        ghostClass: 'opacity-20'
-                    });
-                };
-
-                const currentDayNum = computed(() => {
-                    const day = days.value.find(d => d.id === currentDayId.value);
-                    return day ? day.num : 1;
-                });
-
-                const currentDayItems = computed(() => {
-                    return scheduleItems.value
-                        .filter(item => item.dayId === currentDayId.value)
-                        .sort((a, b) => a.time.localeCompare(b.time));
-                });
-
-                const totalCost = computed(() => {
-                    return currentDayItems.value.reduce((sum, item) => sum + (item.cost || 0), 0);
-                });
-
-                const budgetPercent = computed(() => {
-                    return Math.min((totalCost.value / (config.budget || 50000)) * 100, 100);
-                });
-
-                const weatherIcon = computed(() => {
-                    if (weather.value.temp > 32) return 'fas fa-sun';
-                    return 'fas fa-cloud-sun';
-                });
-
-                watch(currentDayId, () => {
-                    nextTick(() => initSortable());
-                });
+                const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+                const openUrl = (url) => { if (url) window.open(url.startsWith('http') ? url : 'https://' + url, '_blank'); };
+                const openRoute = (a, b) => { window.open(`https://www.google.com/maps/dir/${encodeURIComponent(a)}/${encodeURIComponent(b)}`, '_blank'); };
 
                 onMounted(() => {
-                    loadData();
-                    fetchWeatherData();
-                    convertFrom('twd');
-                    nextTick(() => initSortable());
+                    const container = document.getElementById('petal-container');
+                    for (let i = 0; i < 20; i++) {
+                        const leaf = document.createElement('div');
+                        leaf.className = 'golden-leaf';
+                        leaf.style.left = Math.random() * 100 + 'vw';
+                        leaf.style.width = (Math.random() * 8 + 4) + 'px';
+                        leaf.style.height = leaf.style.width;
+                        leaf.style.animationDuration = (Math.random() * 6 + 4) + 's';
+                        leaf.style.animationDelay = (Math.random() * 5) + 's';
+                        container.appendChild(leaf);
+                    }
                 });
 
                 return {
-                    config, days, currentDayId, scheduleItems, showModal, showConfigModal, isEditing, 
-                    form, weather, exchange, petalStyle, currentDayNum, currentDayItems, 
-                    totalCost, budgetPercent, weatherIcon, openAddModal, saveItem, editItem, 
-                    deleteItem, addDay, updateConfig, handleCoverUpload, openConfigModal: () => showConfigModal.value = true,
-                    convertFrom
+                    roomJoined, roomInput, config, events, filteredEvents, currentDayId, 
+                    showModal, editingId, lang, form, calc, rates, saving, weather,
+                    joinRoom, toggleLang, openAdd, openEdit, saveEvent, removeEvent, addDay, convertCurrency, openUrl, openRoute, saveToCloud
                 };
             }
         }).mount('#app');
