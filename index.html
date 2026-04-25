@@ -81,23 +81,29 @@
     <div id="petal-container"></div>
 
     <div id="app" v-cloak>
-        <!-- 🔐 登入頁 -->
+        <!-- 🔐 登入頁 - 修正橫長問題 -->
         <div v-if="!roomJoined" class="min-h-screen flex items-center justify-center px-6 relative z-50">
-            <div class="glass-panel w-full max-sm rounded-[3rem] p-12 shadow-2xl text-center space-y-8">
-                <div>
-                    <div class="text-6xl mb-6">🏝️🐘</div>
-                    <p class="text-[12px] font-bold text-yellow-600 uppercase tracking-[0.4em]">Thailand Trip</p>
-                    <h1 class="text-3xl font-light text-slate-700 mt-2">Spring <span class="italic font-serif">2026</span></h1>
+            <div class="glass-panel w-full max-w-md rounded-[3rem] p-10 md:p-14 text-center space-y-10">
+                <div class="space-y-3">
+                    <div class="text-6xl mb-4">🏝️🐘</div>
+                    <p class="text-[12px] font-black text-yellow-600 uppercase tracking-[0.5em]">Thailand Trip</p>
+                    <h1 class="text-3xl font-light text-slate-700">Golden <span class="italic font-serif font-bold text-slate-800">2026</span></h1>
                 </div>
-                <div class="space-y-4 text-left">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">房間暗號</label>
-                    <input v-model="roomInput" @keyup.enter="joinRoom" type="password" placeholder="輸入您的旅遊暗號..."
-                        class="w-full bg-white border border-slate-100 rounded-2xl py-4 px-5 text-base focus:outline-none focus:border-yellow-300 text-center tracking-widest shadow-sm">
+                
+                <div class="space-y-6">
+                    <div class="space-y-2 text-left">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-4">Room Access Key / 房間暗號</label>
+                        <input v-model="roomInput" @keyup.enter="joinRoom" type="password" placeholder="••••••••"
+                            class="w-full bg-white/50 border border-slate-100 rounded-3xl py-5 px-6 text-xl focus:outline-none focus:border-yellow-300 text-center tracking-[0.3em] shadow-inner">
+                    </div>
+                    
+                    <button @click="joinRoom" :disabled="!roomInput"
+                        class="w-full py-5 bg-slate-900 text-white rounded-3xl text-[12px] font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-slate-800 transition-all shadow-xl hover:shadow-yellow-200/50">
+                        Enter Journey →
+                    </button>
                 </div>
-                <button @click="joinRoom" :disabled="!roomInput"
-                    class="w-full py-5 bg-slate-800 text-white rounded-2xl text-[12px] font-bold uppercase disabled:opacity-30 hover:bg-slate-700 transition-all shadow-lg">
-                    進入行程 →
-                </button>
+
+                <p class="text-[10px] text-slate-300 font-medium">Please enter your private code to view the itinerary.</p>
             </div>
         </div>
 
@@ -156,13 +162,12 @@
                     </div>
                 </div>
 
-                <!-- 天數導航 -->
+                <!-- 天數導覽 -->
                 <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 items-center">
                     <div class="flex bg-white/60 p-2 rounded-full gap-2 shadow-sm border border-yellow-100 items-center">
                         <div v-for="day in config.days" :key="day.id" 
                             @click="currentDayId = day.id"
                             :class="['px-2 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all flex items-center min-w-[120px]', currentDayId === day.id ? 'bg-yellow-600 text-white shadow-lg scale-105 day-active' : 'text-slate-400 hover:text-yellow-600']">
-                            <!-- 修正：點擊輸入框時阻止冒泡，避免點擊輸入框也觸發 parent 的 click 雖然沒差但更穩定 -->
                             <input v-model="day.label" 
                                 @change="saveToCloud" 
                                 @click.stop
@@ -298,7 +303,7 @@
                 });
 
                 const events = ref([]);
-                const form = ref({ time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', routeB: '', routeName: '' });
+                const form = ref({ time: '', location: '', desc: '', mapUrl: '', videoUrl: '', videoName: '', routeA: '', baseB: '', routeName: '' });
                 const calc = ref({ thb: 0, twd: 0, aud: 0 });
                 const rates = ref({ thb_twd: 0.92, thb_aud: 0.046 });
 
@@ -318,7 +323,6 @@
                                 if (!config.value.days || config.value.days.length === 0) {
                                     config.value.days = [{ id: 'd1', label: 'DAY 1' }];
                                 }
-                                // 如果當前天數被刪掉了，跳回第一天
                                 if (!config.value.days.find(d => d.id === currentDayId.value)) {
                                     currentDayId.value = config.value.days[0].id;
                                 }
