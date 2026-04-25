@@ -64,7 +64,16 @@
             text-align: center;
             width: 100%;
             font-weight: bold;
-            cursor: pointer;
+            cursor: text;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .day-input:focus {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .day-active .day-input:focus {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
@@ -152,16 +161,18 @@
                     <div class="flex bg-white/60 p-2 rounded-full gap-2 shadow-sm border border-yellow-100 items-center">
                         <div v-for="day in config.days" :key="day.id" 
                             @click="currentDayId = day.id"
-                            :class="['px-5 py-3 rounded-full whitespace-nowrap text-xs font-bold transition-all flex items-center min-w-[100px]', currentDayId === day.id ? 'bg-yellow-600 text-white shadow-lg scale-105' : 'text-slate-400 hover:text-yellow-600']">
-                            <!-- 讓使用者可以直接在按鈕內編輯文字 -->
-                            <input v-model="day.label" @change="saveToCloud" 
+                            :class="['px-2 py-2 rounded-full whitespace-nowrap text-xs font-bold transition-all flex items-center min-w-[120px]', currentDayId === day.id ? 'bg-yellow-600 text-white shadow-lg scale-105 day-active' : 'text-slate-400 hover:text-yellow-600']">
+                            <!-- 修正：點擊輸入框時阻止冒泡，避免點擊輸入框也觸發 parent 的 click 雖然沒差但更穩定 -->
+                            <input v-model="day.label" 
+                                @change="saveToCloud" 
+                                @click.stop
                                 class="day-input uppercase" 
-                                :class="currentDayId === day.id ? 'text-white' : 'text-slate-400'">
+                                :class="currentDayId === day.id ? 'text-white placeholder-white/50' : 'text-slate-400 placeholder-slate-300'">
                         </div>
                     </div>
                     <div class="flex gap-2">
                         <button @click="addDay" class="w-10 h-10 shrink-0 bg-white border border-yellow-200 text-yellow-600 rounded-full hover:bg-yellow-50 shadow-sm flex items-center justify-center">+</button>
-                        <button v-if="config.days.length > 1" @click="removeLastDay" class="w-10 h-10 shrink-0 bg-white border border-yellow-200 text-slate-300 rounded-full hover:text-red-400 shadow-sm flex items-center justify-center">-</button>
+                        <button v-if="config.days && config.days.length > 1" @click="removeLastDay" class="w-10 h-10 shrink-0 bg-white border border-yellow-200 text-slate-300 rounded-full hover:text-red-400 shadow-sm flex items-center justify-center">-</button>
                     </div>
                 </div>
 
@@ -304,9 +315,12 @@
                             if (data.events) events.value = Object.values(data.events);
                             if (data.config) {
                                 config.value = data.config;
-                                // 確保初始化後如果天數列表為空則預設一個
                                 if (!config.value.days || config.value.days.length === 0) {
                                     config.value.days = [{ id: 'd1', label: 'DAY 1' }];
+                                }
+                                // 如果當前天數被刪掉了，跳回第一天
+                                if (!config.value.days.find(d => d.id === currentDayId.value)) {
+                                    currentDayId.value = config.value.days[0].id;
                                 }
                             }
                         }
@@ -436,7 +450,6 @@
                 const removeLastDay = () => {
                     if (config.value.days.length > 1) {
                         const removedDay = config.value.days.pop();
-                        // 移除該天的所有行程
                         events.value = events.value.filter(e => e.dayId !== removedDay.id);
                         if (currentDayId.value === removedDay.id) {
                             currentDayId.value = config.value.days[0].id;
